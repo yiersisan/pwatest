@@ -23,6 +23,8 @@
   <script src="./content-demo.js" defer></script>
   <script src="./content-center.js" defer></script>
   <script src="./pwa.js" defer></script>
+  <link rel="stylesheet" href="./interaction.css">
+  <script src="./interaction.js" defer></script>
 </head>
 <body>
   <div class="content-center">
@@ -34,7 +36,7 @@
       <div class="center-profile" id="center-profile"></div>
     </header>
     <p class="reward-rule"><img src="./assets/icons/energy-star.svg" alt="" width="28" height="28"><span id="reward-rule">看完1个视频 → 点亮1枚能量徽章 · 集齐5枚 → 合成英雄</span></p>
-    <div class="demo-banner" id="demo-banner" hidden><strong>视觉演示 · 不记录学习奖励</strong><span>以下为设计示例状态，学习按钮仅演示合成。</span><a href="./content-center.html">返回我的内容中心</a></div>
+    <div class="demo-banner" id="demo-banner" hidden><strong>视觉演示 · 不记录学习奖励</strong><span>以下为设计示例状态，学习按钮打开占位视频。</span><a href="./content-center.html">返回我的内容中心</a></div>
     <main>
       <div id="content-status" class="center-message" role="status">正在读取本机学习记录…</div>
       <section class="course-grid" id="course-grid" aria-label="我的课程" aria-busy="true"></section>
@@ -43,18 +45,11 @@
       <noscript><p>请启用 JavaScript 读取本机学习记录。<a href="./index.html">返回首页</a></p></noscript>
     </main>
     <footer class="center-footer">
-      <p>课程由你关联导入的视频；尚未接入课程后台。完成奖励保存在此设备，视频仍需联网。</p>
+      <p>学习按钮暂统一播放占位视频，不增加课程奖励。已有学习记录保留，真实视频可在「定制」管理。</p>
       <p>英雄素材：复用已有奥特曼头像插画；第二、第三位独立徽章待补齐，获得记录会保留。</p>
-      <div><a href="./content-center.html#demo">查看视觉演示</a><span id="pwa-status" role="status">正在准备离线页面…</span><span>v4.1.0</span></div>
+      <div><a href="./content-center.html#demo">查看视觉演示</a><span id="pwa-status" role="status">正在准备离线页面…</span><span>v4.2.0</span></div>
     </footer>
     <div class="center-update" id="pwa-update" role="status" hidden><span>新版本已准备好</span><button id="pwa-apply" type="button">更新并重新加载</button></div>
-    <dialog id="course-dialog" aria-labelledby="course-dialog-title" aria-describedby="course-dialog-note">
-      <div class="dialog-heading"><h2 id="course-dialog-title"></h2><button id="close-course" type="button" aria-label="关闭课程选择">×</button></div>
-      <p id="course-dialog-note">选择要学习的视频。关联与打开不会增加徽章，首次有效播放完成才计入。</p>
-      <div id="course-video-list"></div>
-      <p id="course-dialog-error" role="alert" hidden></p>
-      <a id="course-import" class="learn-button" href="./report.html">导入新视频</a>
-    </dialog>
   </div>
 </body>
 </html>

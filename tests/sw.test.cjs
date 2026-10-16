@@ -45,7 +45,7 @@ function setup() {
     setNetwork(value, text = body, code = 200) { online = value; body = text; status = code; },
     failWrites() { failWrites = true; },
     lifecycle(name) { let result; handlers[name]({ waitUntil(p) { result = p; } }); return result; },
-    fetch(url, method = 'GET') { let result; handlers.fetch({ request: new Request(url, { method }), respondWith(p) { result = p; } }); return result; }
+    fetch(url, method = 'GET', headers = {}) { let result; handlers.fetch({ request: new Request(url, { method, headers }), respondWith(p) { result = p; } }); return result; }
   };
 }
 
@@ -100,6 +100,39 @@ test('does not intercept other sites, videos, or writes', () => {
   assert.equal(app.fetch('https://other.example/video.mp4'), undefined);
   assert.equal(app.fetch(scope + 'video.mp4'), undefined);
   assert.equal(app.fetch(scope, 'POST'), undefined);
+});
+
+test('serves locally imported manifests without fetching or proxying remote media', async () => {
+  const app = setup();
+  const name = `pwatest-imports-${scope}-v1`;
+  const cache = await app.caches.open(name);
+  const url = scope + '__local_hls__/' + 'a'.repeat(64) + '/playlist.m3u8';
+  await cache.put(url, new Response('#EXTM3U\n#EXT-X-ENDLIST', { headers: { 'Content-Type': 'application/vnd.apple.mpegurl' } }));
+  app.setNetwork(false);
+  assert.match(await (await app.fetch(url)).text(), /^#EXTM3U/);
+  assert.equal((await app.fetch(scope + '__local_hls__/capabilities')).headers.get('X-Pwatest-HLS'), '1');
+  assert.equal((await app.fetch(scope + '__local_hls__/' + 'b'.repeat(64) + '/playlist.m3u8')).status, 404);
+  assert.equal((await app.fetch(scope + '__local_hls__/https://other.example/video')).status, 404);
+  await app.lifecycle('activate');
+  assert(app.stores.has(name), 'updates must preserve user-imported manifests');
+});
+
+test('local manifests answer byte ranges without losing the HLS response type', async () => {
+  const app = setup();
+  const cache = await app.caches.open(`pwatest-imports-${scope}-v1`);
+  const url = scope + '__local_hls__/' + 'c'.repeat(64) + '/playlist.m3u8';
+  const body = '#EXTM3U\n#EXT-X-ENDLIST\n';
+  await cache.put(url, new Response(body));
+  const full = await app.fetch(url);
+  assert.equal(full.headers.get('Content-Length'), String(Buffer.byteLength(body)));
+  const partial = await app.fetch(url, 'GET', { Range: 'bytes=0-6' });
+  assert.equal(partial.status, 206);
+  assert.equal(partial.headers.get('Content-Type'), 'application/vnd.apple.mpegurl');
+  assert.equal(partial.headers.get('Content-Range'), `bytes 0-6/${Buffer.byteLength(body)}`);
+  assert.equal(await partial.text(), '#EXTM3U');
+  assert.equal(await (await app.fetch(url, 'GET', { Range: 'bytes=8-' })).text(), '#EXT-X-ENDLIST\n');
+  assert.equal((await app.fetch(url, 'GET', { Range: 'bytes=999-' })).status, 416);
+  assert.equal((await app.fetch(url, 'GET', { Range: 'bytes=0-2,5-8' })).status, 416);
 });
 
 test('manifest, page scripts and icon sizes are valid', () => {

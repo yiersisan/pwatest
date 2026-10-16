@@ -9,7 +9,8 @@
   function parseURL(value) {
     let url;
     try { url = new URL(String(value).trim()); } catch { throw new Error('请输入完整的 HTTPS 视频链接。'); }
-    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('请使用不含账号密码的 HTTPS 视频链接。');
+    const localManifest = url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) && /\/__local_hls__\/[a-f0-9]{64}\/playlist\.m3u8$/.test(url.pathname);
+    if ((url.protocol !== 'https:' && !localManifest) || url.username || url.password) throw new Error('请使用不含账号密码的 HTTPS 视频链接。');
     return url;
   }
   function identity(value) {
@@ -31,7 +32,8 @@
         if (seen.has(id)) return [];
         seen.add(id);
         return [{ id, url, title: typeof item.title === 'string' && item.title.trim() ? item.title.slice(0, 100) : '未命名视频',
-          position: finite(item.position), duration: finite(item.duration), completed: item.completed === true, updatedAt: finite(item.updatedAt) }];
+          position: finite(item.position), duration: finite(item.duration), completed: item.completed === true, updatedAt: finite(item.updatedAt),
+          ...(finite(item.playlistDuration) ? { playlistDuration: finite(item.playlistDuration) } : {}) }];
       } catch { return []; }
     }).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 50);
   }

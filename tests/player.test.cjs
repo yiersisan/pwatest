@@ -53,14 +53,14 @@ class Video extends Element {
   canPlayType() { return 'probably'; }
   metadata(duration = 100) { this.currentSrc = this.src; this.readyState = 1; this.duration = duration; this.fire('loadedmetadata'); }
 }
-function app(initial = null, storageBlocked = false, coursePlayer = null) {
+function app(initial = null, storageBlocked = false, coursePlayer = null, watchPlayer = null) {
   const els = Object.fromEntries([...fs.readFileSync(path.join(__dirname, '../report.html'), 'utf8').matchAll(/id="([^"]+)"/g)].map(x => [x[1], new Element()]));
   els.video = new Video();
   const doc = new EventTarget(); doc.getElementById = id => els[id]; doc.createElement = tag => new Element(tag);
-  const win = new EventTarget(); win.PlayerCore = Core; win.CoursePlayer = coursePlayer;
+  const win = new EventTarget(); win.PlayerCore = Core; win.DefaultVideo = { url: 'https://example.com/pwatest/assets/video/default.m3u8', title: '百度完整视频（8分57秒）' }; win.CoursePlayer = coursePlayer; win.WatchPlayer = watchPlayer;
   const store = new Map(initial ? [[Core.STORAGE_KEY, initial]] : []);
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8'), {
-    window: win, document: doc, navigator: { onLine: true }, URL, Date,
+    window: win, document: doc, navigator: { onLine: true }, URL, Date, Event, CustomEvent,
     localStorage: { getItem: key => { if (storageBlocked) throw Error('blocked'); return store.get(key); }, setItem: (key, value) => { if (storageBlocked) throw Error('blocked'); store.set(key, value); } },
     setTimeout: () => 1, clearTimeout() {}
   });
@@ -68,7 +68,7 @@ function app(initial = null, storageBlocked = false, coursePlayer = null) {
 }
 test('default import, pause saving, reopening, resume, restart, and deletion', () => {
   const first = app();
-  assert.match(first.els['video-url'].value, /fid=20690952231959/);
+  assert.equal(first.els['video-url'].value, 'https://example.com/pwatest/assets/video/default.m3u8');
   first.els['import-form'].fire('submit');
   assert.equal(first.els.video.plays, 1);
   assert.equal(first.saved().length, 1);
@@ -147,4 +147,51 @@ test('course rewards only receive valid ended callbacks, never imports, starts o
  instance.els.video.ended=true;instance.els.video.currentSrc='https://example.com/stale.mp4';instance.els.video.fire('ended');assert.equal(completions.length,0);
  instance.els.video.currentSrc=instance.els.video.src;instance.els.video.fire('ended');
  assert.equal(completions[0],Core.identity(url));assert.equal(completions.length,1);
+});
+
+test('a late waiting event cannot overwrite a terminal media error', () => {
+  const instance = app(); instance.els['import-form'].fire('submit');
+  instance.els.video.error = { code: 4 }; instance.els.video.fire('error');
+  const error = instance.els['player-status'].textContent;
+  instance.els.video.fire('waiting');
+  assert.equal(instance.els['player-status'].textContent, error);
+});
+
+test('imported longer manifest preserves progress and clears completion of a short preview', () => {
+  const old = Core.upsert([], url, '视频', 1).record;
+  old.position = 100; old.duration = 100; old.completed = true;
+  const instance = app(JSON.stringify([old]));
+  instance.els['history-list'].children[0].children[3].children[1].fire('click');
+  const detail = { url: 'https://example.com/__local_hls__/' + 'a'.repeat(64) + '/playlist.m3u8', title: '完整清单', playlistDuration: 510 };
+  instance.win.dispatchEvent(new CustomEvent('pwatest:import-source', { detail }));
+  assert.equal(detail.accepted, true);
+  assert.equal(instance.saved().length, 1);
+  assert.equal(instance.saved()[0].completed, false);
+  assert.equal(instance.saved()[0].position, 100);
+  instance.els.video.metadata(510);
+  assert.equal(instance.els.video.currentTime, 100);
+  assert.equal(Core.decode(JSON.stringify(instance.saved()))[0].playlistDuration, 510);
+});
+
+test('fullscreen placeholder reuses player and resume but does not overwrite real video history', () => {
+ const real = Core.upsert([],url,'真实视频',1).records; real[0].position=51;
+ const key='pwatest-preview-history-v1';
+ const watch={active:true,placeholder:true,storageKey:key,start({defaultURL,importSource}){importSource(defaultURL,'学习占位视频');}};
+ const instance=app(JSON.stringify(real),false,null,watch);
+ assert.equal(instance.saved()[0].position,51);assert.equal(instance.saved()[0].title,'真实视频');
+ assert.equal(instance.els.video.plays,1);
+ instance.els.video.metadata();instance.els.video.currentTime=24;instance.els.video.pause();
+ assert.equal(JSON.parse(instance.store.get(key))[0].position,24);
+ assert.equal(instance.saved()[0].position,51);
+});
+
+test('watch player invokes muted fallback after an audible autoplay policy rejection', async () => {
+ let retries=0;
+ const watch={active:true,placeholder:true,storageKey:'preview',start(){},autoplayBlocked:async()=>{retries++;return true;}};
+ const instance=app(null,false,null,watch);
+ instance.els.video.blocked=true;
+ instance.els['import-form'].fire('submit');
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(retries,1);
+ assert.doesNotMatch(instance.els['player-status'].textContent,/请点播放器/);
 });

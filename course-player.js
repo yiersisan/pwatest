@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  // 占位播放不绑定课程、不启动真实课程，也不触发任何奖励。
+  if (window.WatchPlayer?.placeholder) return;
   const id = new URLSearchParams(location.hash.slice(1)).get('course');
   const course = ContentConfig.courses.find(c => c.id === id);
   const note = document.getElementById('course-playback-status');

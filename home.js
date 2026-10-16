@@ -93,17 +93,13 @@
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
   });
   $('close-dialog').addEventListener('click', close);
+  function openVideo(title) {
+    saveHomePosition();
+    location.assign('./report.html#watch=1&placeholder=1&from=home&title=' + encodeURIComponent(title));
+  }
   function openLesson(id) {
     const lesson = data?.lessons.find(item => item.id === id);
-    if (!lesson) return;
-    show(lesson.title, '这是课程详情演示，尚未接入真实课程视频。打开课程不会计为完成；下方演示按钮只修改本机示例进度。已有视频可到「定制」导入播放。', [
-      { label: completed.has(id) ? '已完成（演示）· 返回' : '演示：标记已完成', primary: true, run: () => {
-        completed.add(id);
-        try { localStorage.setItem(Core.STORAGE_KEY, JSON.stringify([...completed])); } catch { $('demo-storage').hidden = false; }
-        updateProgress(); close();
-      } },
-      { label: '去定制导入视频', href: './report.html' }
-    ]);
+    if (lesson) openVideo(lesson.title);
   }
   root.addEventListener('click', event => {
     const target = event.target.closest('[data-action],[data-lesson]');
@@ -111,8 +107,8 @@
     if (target.dataset.lesson) { openLesson(target.dataset.lesson); return; }
     switch (target.dataset.action) {
       case 'profile': show(window.LearningProfile?.name || '学习资料', '这是示例昵称和头像，尚未接入账号及个人资料服务。'); break;
-      case 'feedback': show('英语 · 点评', '首页的 10 条为设计示例数量，未接入真实老师点评、列表或音视频；这里不会播放虚构点评。'); break;
-      case 'weekend': show('FUN WEEKEND', Core.weekend(new Date()) ? '今天是周末！这是活动入口演示，尚未接入真实活动内容。开放时间按本机日期判断。' : '周六至周日开放，周末再来一起玩吧！当前为活动入口演示，按本机日期判断。'); break;
+      case 'feedback': openVideo('英语 · 点评'); break;
+      case 'weekend': openVideo('FUN WEEKEND'); break;
       case 'install': show('添加到主屏幕', '在 iPad Safari 中打开本站，点击分享按钮，再选择「添加到主屏幕」。建议横屏使用。首次联网并显示离线首页已准备好后，可离线打开首页；视频仍需联网。', [], '使用说明'); break;
     }
   });

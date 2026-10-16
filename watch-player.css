@@ -1,0 +1,18 @@
+/* Same video/history engine; watch mode fills the viewport without page chrome. */
+html.watch-mode,html.watch-mode body{background:#000;color:#fff;height:100%;min-height:100%;padding:0}
+.watch-mode .app{position:fixed;inset:0;max-width:none;width:100%;height:100%;margin:0;padding:0;background:#000}
+.watch-mode .app>:not(.player-card){display:none!important}
+.watch-mode .player-card{width:100%;height:100%;border:0;border-radius:0;background:#000;overflow:hidden}
+.watch-mode .player-card>:not(.stage){display:none!important}
+.watch-mode .stage{width:100%;height:100%;min-height:0;max-height:none;aspect-ratio:auto;background:#000}
+.watch-mode .stage video{width:100%;height:100%;max-height:none;object-fit:contain}
+.watch-mode #empty-player{display:none!important}
+.watch-shield{position:absolute;inset:0;z-index:2;background:transparent}
+.watch-lock{position:absolute;left:max(16px,env(safe-area-inset-left));top:50%;transform:translateY(-50%);z-index:3;width:56px;height:56px;display:grid;place-items:center;padding:0;border:1px solid #ffffff60;border-radius:50%;background:#182720b8;color:#fff;-webkit-tap-highlight-color:transparent}
+.watch-lock svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.watch-lock .locked-shackle{display:none}.watch-locked .watch-lock .locked-shackle{display:block}.watch-locked .watch-lock .open-shackle{display:none}
+.watch-locked .stage video{pointer-events:none}
+/* WebKit's native fullscreen would put the video above our lock button. */
+.watch-mode video::-webkit-media-controls-fullscreen-button{display:none}
+.watch-locked video::-webkit-media-controls{display:none!important}
+.watch-lock:focus-visible{outline:3px solid #fff;outline-offset:4px}

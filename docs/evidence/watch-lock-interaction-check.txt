@@ -1,0 +1,39 @@
+Browser tab: 15, Title: "全屏播放与长按保护验收", URL: "http://127.0.0.1:8080/pwatest/scripts/watch-check.html".
+0 AXWebArea 全屏播放与长按保护验收, URL: 127.0.0.1:8080/pwatest/scripts/watch-check.html
+	1 container
+		2 text 全屏播放验收（真实 CSS 视口，不缩放）
+		3 button 检查五种视口, ID: layouts
+		4 button 检查首页与内容中心直达, ID: routes
+		5 button 检查长按保护与输入例外, ID: interactions
+		6 button 检查锁定与解锁, ID: lockcheck
+		19 text [
+ {
+  "state": "unlocked",
+  "controls": true,
+  "autoplay": true,
+  "shieldHidden": true
+ },
+ {
+  "state": "locked",
+  "controls": false,
+  "shieldHidden": false,
+  "pressed": "true",
+  "seekKeyBlocked": true,
+  "tapBlocked": true
+ },
+ {
+  "state": "unlocked again",
+  "controls": true,
+  "shieldHidden": true,
+  "pressed": "false"
+ }
+]
+	8 container Description: 全屏播放器预览, ID: preview
+		9 AXWebArea 学习视频 · 全屏播放, URL: 127.0.0.1:8080/pwatest/report.html#watch=1&placeholder=1
+			10 container 学习占位视频
+				11 container
+					12 container 无法播放媒体。, ID: video
+						17 slider (disabled) 视频时间进度条
+					18 checkbox Description: 锁定播放操作, Value: 0, ID: watch-lock
+
+The focused UI element is 18 checkbox Description: 锁定播放操作, Value: 0, ID: watch-lock

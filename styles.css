@@ -4,3 +4,9 @@
 .diagnostics{border-top:1px solid var(--line);padding:14px 24px;font-size:13px;color:var(--muted)}.diagnostics summary{cursor:pointer;min-height:30px;line-height:30px}.diagnostics pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;background:#14131c;padding:14px;border-radius:10px;user-select:text;-webkit-user-select:text}.diagnostics a{display:inline-block;color:#ff97bf;padding:10px 0;min-height:44px}
 
 .back-home{display:inline-flex;align-items:center;min-height:48px;margin-bottom:12px;color:#ff97bf;text-decoration:none;font-size:15px}.back-home:focus-visible{outline:2px solid #ff94bc;outline-offset:3px}.report-update{position:sticky;bottom:16px;display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #674055;border-radius:16px;background:#302033;padding:12px;margin-top:20px;font-size:14px}
+/* Local playlist importer: keep controls inside the existing import panel. */
+.playlist-import { margin: 16px 0; padding: 12px; border: 1px solid #444451; border-radius: 12px; }
+.playlist-import summary { cursor: pointer; min-height: 32px; }
+.playlist-import input[type="file"], .playlist-import select { width: 100%; max-width: 100%; min-height: 44px; color: inherit; background: #24242e; border: 1px solid #555563; border-radius: 8px; padding: 8px; box-sizing: border-box; }
+.playlist-import select { margin: 8px 0 12px; }
+.playlist-import .hint { overflow-wrap: anywhere; }

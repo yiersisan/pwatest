@@ -4,7 +4,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 4 14 8-14 8Z"/></svg>';
   const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
-  let state, config, records = [], demo = false, generation = 0, feedbackRunning = false, dialogFocus;
+  let state, config, records = [], demo = false, generation = 0, feedbackRunning = false;
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   function SubjectTag(subject) {
     return `<span class="subject-tag" style="--subject:${esc(subject.color)}">${esc(subject.label)}</span>`;
@@ -107,63 +107,23 @@
       }
       if (ticket !== generation) return;
       ContentCenterPage(); playFeedback();
+      try { const y = Number(sessionStorage.getItem('pwatest-content-position')); if (y > 0) requestAnimationFrame(() => window.scrollTo(0,y)); } catch {}
     } catch (error) {
       if (ticket !== generation) return;
       $('course-grid').replaceChildren(); $('content-status').hidden = true;
       showError(error.message || '本机学习记录无法读取，未清空原记录。请检查存储设置后重新加载。');
     } finally { if (ticket === generation) $('course-grid').setAttribute('aria-busy', 'false'); }
   }
-  function launch(course, videoId) {
-    try { sessionStorage.setItem('pwatest-course-launch', JSON.stringify({courseId:course.id,videoId})); } catch { /* 目标页可从持久化关联中找到下一条内容。 */ }
-    location.assign(course.entry);
-  }
-  async function chooseCourse(id) {
+  function chooseCourse(id) {
     const course = config.courses.find(c => c.id === id);
     if (!course) return;
-    if (demo) {
-      const videoId = 'visual-' + id + '-' + (state.courses[id]?.total || 0);
-      RewardCore.bind(state,config,id,videoId);
-      RewardCore.complete(state,config,{valid:true,videoId,at:Date.now()});
-      ContentCenterPage(); playFeedback();
-      if (!state.feedback.length) RewardFeedback('演示：模拟完成1个视频；没有写入真实记录');
-      return;
-    }
-    const dialog = $('course-dialog'); dialogFocus = document.activeElement;
-    $('course-dialog-title').textContent = course.name;
-    $('course-dialog-error').hidden = true;
-    $('course-import').href = course.entry;
-    $('course-video-list').replaceChildren();
-    try {
-      state = await RewardStore.read();
-      records = PlayerCore.decode(localStorage.getItem(PlayerCore.STORAGE_KEY));
-      const view = RewardCore.view(state,config,id,records);
-      if (view.nextContent) $('course-dialog-note').textContent = '下一条：' + view.nextContent.title + '。播放完成才收集徽章；也可以选择其他视频或导入新视频。';
-      else $('course-dialog-note').textContent = '从本机播放记录中选择视频，或导入新视频。打开不会增加徽章，同一视频仅首次有效播放完成计入。';
-      if (!records.length) $('course-video-list').textContent = '还没有导入视频。请先添加可播放的视频链接。';
-      const sorted = [...records].sort((a,b) => Number(b.id === view.nextContent?.id) - Number(a.id === view.nextContent?.id));
-      for (const record of sorted) {
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'video-choice';
-        const assigned = state.bindings[record.id], awarded = RewardCore.receiptFor(state,record.id);
-        button.disabled = Boolean(assigned && assigned !== id);
-        const title = document.createElement('span'); title.textContent = record.title;
-        const note = document.createElement('small'); note.textContent = button.disabled ? '已关联其他课程' : awarded ? '已计入 · 重看' : assigned ? '继续观看' : '关联并学习';
-        button.append(title,note);
-        button.addEventListener('click', async () => {
-          button.disabled = true;
-          try { await RewardStore.bind(id,record.id); launch(course,record.id); }
-          catch(error) { $('course-dialog-error').hidden = false; $('course-dialog-error').textContent = error.message || '关联未保存，请重试。'; button.disabled = false; }
-        });
-        $('course-video-list').append(button);
-      }
-    } catch { $('course-dialog-error').hidden = false; $('course-dialog-error').textContent = '无法读取视频或学习记录。请检查存储设置，奖励不会自动增加。'; }
-    if (!dialog.open) dialog.showModal();
+    try { sessionStorage.setItem('pwatest-content-position', String(window.scrollY)); } catch {}
+    location.assign(course.entry + (demo ? '&from=content-demo' : '&from=content'));
   }
   $('course-grid').addEventListener('click', event => {
     const button = event.target.closest('[data-course]');
     if (button) chooseCourse(button.dataset.course);
   });
-  $('close-course').addEventListener('click', () => $('course-dialog').close());
-  $('course-dialog').addEventListener('close', () => dialogFocus?.isConnected && dialogFocus.focus({preventScroll:true}));
   $('center-back').addEventListener('click', event => {
     try {
       const previous = new URL(document.referrer);
@@ -174,6 +134,6 @@
   $('retry-content').addEventListener('click', load);
   window.addEventListener('hashchange', load);
   window.addEventListener('pageshow', event => { if (event.persisted) load(); });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && !demo && !feedbackRunning && !$('course-dialog').open) load(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !demo && !feedbackRunning) load(); });
   load();
 })();

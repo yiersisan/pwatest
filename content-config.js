@@ -19,7 +19,7 @@
       { id: 'pinyin', name: '快乐拼音', subject: 'pinyin' },
       { id: 'math', name: '数学启蒙', subject: 'math' },
       { id: 'reading', name: '趣味阅读', subject: 'reading' }
-    ].map(course => ({ ...course, entry: './report.html#course=' + course.id, heroOrder: ['ultraman', 'hero-02', 'hero-03'] })),
+    ].map(course => ({ ...course, entry: './report.html#watch=1&placeholder=1&course=' + course.id, heroOrder: ['ultraman', 'hero-02', 'hero-03'] })),
     copy: {
       first: '看完5个视频，合成英雄', remaining: '再看{n}个视频，点亮英雄',
       unlocked: '英雄已点亮，继续收集下一位', collecting: '再看{n}个视频，收集下一位',

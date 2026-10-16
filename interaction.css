@@ -1,0 +1,4 @@
+/* 展示界面不选择文字、不弹出 iOS 图片/链接长按菜单；保留表单编辑和原生滚动缩放。 */
+html body *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+html body input,html body textarea,html body [contenteditable="true"]{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+img,svg{-webkit-user-drag:none;user-drag:none}img{pointer-events:none}

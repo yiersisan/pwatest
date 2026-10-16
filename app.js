@@ -1,31 +1,34 @@
-/* 默认链接由用户提供；它可能过期，失效后可在播放记录中替换。 */
+/* 默认完整清单配置在 default-video.js；失效后可在记录中替换。 */
 (() => {
   'use strict';
-  const DEFAULT_URL = 'https://pan.baidu.com/share/streaming?channel=chunlei&uk=967102443&fid=20690952231959&sign=faf8eabe0d30b514cacd9c564a23c647c94fcab4&timestamp=1792169567&shareid=12102931033&type=M3U8_AUTO_480&vip=0&jsToken=B5A6A531E1DE9D3173619DEF8A201D4B95979ACB8AEE6188A09D15978D938C486FFABA87B97E8A0E22672372424E29A9&isplayer=1&check_blue=1&adToken=&src_id=1';
+  const DEFAULT_URL = window.DefaultVideo.url;
   const Core = window.PlayerCore;
+  const STORAGE_KEY = window.WatchPlayer?.storageKey || Core.STORAGE_KEY;
   const $ = id => document.getElementById(id);
   const video = $('video');
   let records = [], current = null, editId = null, pendingResume = null, mediaReady = false;
   let playGeneration = 0, lastSavedAt = 0, loadTimer;
+  function sourceName(item) { return item.url.includes('/__local_hls__/') ? '本机导入清单' : new URL(item.url).hostname; }
   function storageWarning() {
     $('storage-status').hidden = false;
     $('storage-status').textContent = '无法读取或保存本机记录。当前仍可播放，但关闭后可能无法恢复进度。请检查浏览器的存储设置。';
   }
-  try { records = Core.decode(localStorage.getItem(Core.STORAGE_KEY)); } catch { storageWarning(); }
+  try { records = Core.decode(localStorage.getItem(STORAGE_KEY)); } catch { storageWarning(); }
   function persist() {
-    try { localStorage.setItem(Core.STORAGE_KEY, JSON.stringify(records)); } catch { storageWarning(); }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch { storageWarning(); }
   }
   function updateDiagnostics() {
     const codes = { 1: '播放被取消', 2: '媒体网络错误', 3: '媒体解码失败', 4: '媒体源无法加载或格式不支持' };
     const code = video.error?.code || 0;
     const detail = String(video.error?.message || '').replace(/https?:\/\/[^\s"<>]+/g, '[媒体地址]').slice(0, 300);
     $('playback-diagnostics').textContent = [
-      '页面脚本版本：v3.2',
+      '页面脚本版本：v3.4',
       '原生 HLS 支持：' + (video.canPlayType('application/vnd.apple.mpegurl') || '未声明支持'),
       '错误代码：' + (code ? code + '（' + (codes[code] || '未知错误') + '）' : '无'),
       '错误详情：' + (detail || '浏览器未提供'),
       '就绪状态：' + video.readyState + '；网络状态：' + video.networkState,
-      '视频来源：' + (current ? new URL(current.url).hostname : '尚未选择'),
+      '视频来源：' + (current ? sourceName(current) : '尚未选择'),
+      '清单声明时长：' + (current?.playlistDuration ? Core.time(current.playlistDuration) + '（分片可播放性需验证）' : '未导入清单'),
       '页面提示：' + $('player-status').textContent
     ].join('\n');
   }
@@ -44,7 +47,7 @@
       li.className = 'history-item' + (current?.id === item.id ? ' active' : '');
       const title = document.createElement('h3'); title.textContent = item.title;
       const meta = document.createElement('p'); meta.className = 'history-meta';
-      meta.textContent = new URL(item.url).hostname + ' · ' + progressText(item);
+      meta.textContent = sourceName(item) + ' · ' + progressText(item);
       const bar = document.createElement('progress'); bar.max = item.duration || 1; bar.value = item.duration ? item.position : 0;
       bar.setAttribute('aria-label', item.title + '：' + progressText(item));
       const actions = document.createElement('div'); actions.className = 'history-actions';
@@ -55,9 +58,10 @@
       }
       action(item.completed ? '重新播放' : item.position > 0 ? '继续播放' : '播放', () => select(item, true));
       action('替换链接', () => {
+        window.dispatchEvent(new Event('pwatest:edit-source'));
         editId = item.id; $('video-title').value = item.title; $('video-url').value = item.url;
         $('import-button').textContent = '更新并播放'; $('cancel-edit').hidden = false;
-        message('替换同一视频的链接后，会保留当前播放进度。');
+        message('可替换同一视频的链接，或选择新的清单文件；保留当前播放进度。');
         $('import-form').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('video-url').focus();
       });
       action('删除记录', () => {
@@ -70,6 +74,7 @@
         }
         if (editId === item.id) resetForm();
         records = records.filter(record => record.id !== item.id); persist(); renderHistory();
+        window.dispatchEvent(new CustomEvent('pwatest:delete-source', { detail: { url: item.url } }));
       }, 'delete');
       li.append(title, meta, bar, actions); $('history-list').append(li);
     }
@@ -85,9 +90,13 @@
   function play() {
     const generation = playGeneration;
     const promise = video.play();
-    if (promise) promise.catch(error => {
+    if (promise) promise.catch(async error => {
       if (generation !== playGeneration || error.name === 'AbortError') return;
-      if (error.name === 'NotAllowedError') status('请点播放器里的播放按钮开始观看。');
+      if (error.name === 'NotAllowedError') {
+        const started = window.WatchPlayer?.autoplayBlocked ? await window.WatchPlayer.autoplayBlocked() : false;
+        if (generation !== playGeneration) return;
+        if (!started) status('请点播放器里的播放按钮开始观看。');
+      }
       else showMediaError();
     });
   }
@@ -97,7 +106,7 @@
     if (fromStart) { item.position = 0; item.completed = false; }
     pendingResume = item.completed ? 0 : item.position;
     item.updatedAt = Date.now(); records = [item, ...records.filter(record => record.id !== item.id)]; persist();
-    $('current-title').textContent = item.title; $('current-source').textContent = new URL(item.url).hostname;
+    $('current-title').textContent = item.title; $('current-source').textContent = sourceName(item);
     $('empty-player').hidden = true; video.hidden = false; $('restart').disabled = false;
     $('direct-video').href = item.url; $('direct-video').hidden = false;
     status(pendingResume > 0 ? '正在加载，将从 ' + Core.time(pendingResume) + ' 继续…' : '正在加载视频…');
@@ -137,7 +146,7 @@
     clearTimeout(loadTimer); restoreProgress();
     if (pendingResume === null) status('正在播放 · 进度自动保存');
   });
-  video.addEventListener('waiting', () => { if (current) status('正在缓冲，请稍候…'); });
+  video.addEventListener('waiting', () => { if (current && !video.error) status('正在缓冲，请稍候…'); });
   video.addEventListener('timeupdate', () => {
     restoreProgress();
     if (Date.now() - lastSavedAt >= 5000) saveProgress();
@@ -152,7 +161,9 @@
     if (!current) return;
     clearTimeout(loadTimer);
     if (!navigator.onLine) status('当前处于离线状态。此视频尚未下载，请联网后重新播放。');
+    else if (current.url.includes('/__local_hls__/')) status('清单或视频分片未能加载：本机清单可能已被清除，或分片链接已过期、需要登录。请重新导入有效清单；保存清单不等于保存了视频。');
     else if (/M3U8|\.m3u8/i.test(current.url) && !video.canPlayType('application/vnd.apple.mpegurl')) status('当前浏览器不支持原生 HLS，请在 iPad Safari 中打开。');
+    else if (window.WatchPlayer?.placeholder) status('占位视频未能加载：链接可能过期、需要网盘登录或不允许外站播放。请确认链接仍可用后重试。');
     else status('视频未能加载：链接可能过期、需要网盘登录或不允许外站播放。请在记录中替换链接后重试。');
   }
   video.addEventListener('error', showMediaError);
@@ -164,19 +175,30 @@
   }
   $('cancel-edit').addEventListener('click', resetForm);
   $('use-default').addEventListener('click', () => {
-    resetForm(); $('video-url').value = DEFAULT_URL; $('video-title').value = '百度网盘视频';
-    message('默认链接已填入，点击「导入视频」开始播放。');
+    resetForm(); $('video-url').value = DEFAULT_URL; $('video-title').value = window.DefaultVideo.title;
+    message('已选默认完整清单（08:57），点击「导入视频」开始播放。');
   });
-  $('import-form').addEventListener('submit', event => {
-    event.preventDefault();
+  function importSource(value, title, playlistDuration) {
     try {
       saveProgress();
-      const result = Core.upsert(records, $('video-url').value, $('video-title').value, Date.now(), editId);
+      const result = Core.upsert(records, value, title, Date.now(), editId);
+      if (playlistDuration) {
+        result.record.playlistDuration = playlistDuration;
+        if (playlistDuration > result.record.duration + 1) result.record.completed = false;
+      }
       // 已保存旧播放器进度，解除旧引用，避免覆盖刚替换的记录。
       window.CoursePlayer?.imported(result.record, editId);
       current = null; records = result.records; resetForm(); select(result.record, true);
-      message('已导入。若未自动播放，请点击播放器中的播放按钮。');
-    } catch (error) { message(error.message); $('video-url').focus(); }
+      message(playlistDuration ? '已导入清单。请点击播放并验证后半段画面和声音。' : '已导入。若未自动播放，请点击播放器中的播放按钮。');
+      return true;
+    } catch (error) { message(error.message); $('video-url').focus(); return false; }
+  }
+  $('import-form').addEventListener('submit', event => {
+    event.preventDefault();
+    importSource($('video-url').value, $('video-title').value);
+  });
+  window.addEventListener('pwatest:import-source', event => {
+    event.detail.accepted = importSource(event.detail.url, event.detail.title, event.detail.playlistDuration);
   });
   function networkStatus() { $('network-status').textContent = navigator.onLine ? '在线播放' : '当前离线'; }
   window.addEventListener('online', networkStatus);
@@ -184,10 +206,13 @@
   window.addEventListener('pagehide', saveProgress);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
   $('video-url').value = DEFAULT_URL;
-  $('video-title').value = '百度网盘视频';
+  $('video-title').value = window.DefaultVideo.title;
   networkStatus(); renderHistory();
   updateDiagnostics();
   if (records[0]) status('上次看到「' + records[0].title + '」' + Core.time(records[0].position) + '，点击记录中的播放按钮继续。');
   window.addEventListener('pwatest:before-update', saveProgress);
-  window.CoursePlayer?.launch(records, select);
+  if (window.WatchPlayer?.active) {
+    window.WatchPlayer.start({ defaultURL: DEFAULT_URL, importSource, retry: () => { if (current) select(current, true); } });
+    if (!window.WatchPlayer.placeholder) window.CoursePlayer?.launch(records, select);
+  } else window.CoursePlayer?.launch(records, select);
 })();
