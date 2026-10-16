@@ -143,7 +143,11 @@
     if (Date.now() - lastSavedAt >= 5000) saveProgress();
   });
   video.addEventListener('pause', () => { saveProgress(); renderHistory(); });
-  video.addEventListener('ended', () => { pendingResume = null; saveProgress(); renderHistory(); status('播放完毕，可点击「从头播放」再看一次。'); });
+  video.addEventListener('ended', () => {
+    const completedRecord = current && mediaReady && video.ended && video.currentSrc === current.url ? { id: current.id } : null;
+    pendingResume = null; saveProgress(); renderHistory(); status('播放完毕，可点击「从头播放」再看一次。');
+    if (completedRecord) window.CoursePlayer?.completed(completedRecord);
+  });
   function showMediaError() {
     if (!current) return;
     clearTimeout(loadTimer);
@@ -169,6 +173,7 @@
       saveProgress();
       const result = Core.upsert(records, $('video-url').value, $('video-title').value, Date.now(), editId);
       // 已保存旧播放器进度，解除旧引用，避免覆盖刚替换的记录。
+      window.CoursePlayer?.imported(result.record, editId);
       current = null; records = result.records; resetForm(); select(result.record, true);
       message('已导入。若未自动播放，请点击播放器中的播放按钮。');
     } catch (error) { message(error.message); $('video-url').focus(); }
@@ -184,4 +189,5 @@
   updateDiagnostics();
   if (records[0]) status('上次看到「' + records[0].title + '」' + Core.time(records[0].position) + '，点击记录中的播放按钮继续。');
   window.addEventListener('pwatest:before-update', saveProgress);
+  window.CoursePlayer?.launch(records, select);
 })();

@@ -1,0 +1,142 @@
+Browser tab: 12, Title: "内容中心验收工具", URL: "http://127.0.0.1:8080/pwatest/scripts/content-check.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 139-147, 149-213
+~		128 text [
+ {
+  "scenario": "long",
+  "noPageOverflow": true,
+  "cards": 5,
+  "footerNoOverlap": true,
+  "starsBelowHero": true,
+  "errorVisible": false,
+  "emptyVisible": false,
+  "imageFailures": 0,
+  "progress": "3 / 5"
+ },
+ {
+  "scenario": "empty",
+  "noPageOverflow": true,
+  "cards": 0,
+  "footerNoOverlap": true,
+  "starsBelowHero": true,
+  "errorVisible": false,
+  "emptyVisible": true,
+  "imageFailures": 0
+ },
+ {
+  "scenario": "error",
+  "noPageOverflow": true,
+  "cards": 0,
+  "footerNoOverlap": true,
+  "starsBelowHero": true,
+  "errorVisible": true,
+  "emptyVisible": false,
+  "imageFailures": 0
+ },
+ {
+  "scenario": "images",
+  "noPageOverflow": true,
+  "cards": 5,
+  "footerNoOverlap": true,
+  "starsBelowHero": true,
+  "errorVisible": false,
+  "emptyVisible": false,
+  "imageFailures": 5,
+  "progress": "3 / 5"
+ },
+ {
+  "scenario": "five",
+  "noPageOverflow": true,
+  "cards": 5,
+  "footerNoOverlap": true,
+  "starsBelowHero": true,
+  "errorVisible": false,
+  "emptyVisible": false,
+  "imageFailures": 0,
+  "progress": "5 / 5",
+  "after": "新一轮0 / 5",
+  "unlocked": true
+ }
+]
+~		26 AXWebArea 内容中心 · 小小学习岛, URL: 127.0.0.1:8080/pwatest/content-center.html#demo-five
+~				133 container 英 趣味英语
+~					134 heading 英 趣味英语, Value: 2, ID: course-english
+~						136 text 趣味英语
+~					137 container 奥特曼，已点亮
++						139 text 已点亮
++					140 container
++						141 text 新一轮 0  / 5
++					142 content list 已收集 0 枚，共 5 枚
++						143 image 第1枚未收集
++						144 image 第2枚未收集
++						145 image 第3枚未收集
++						146 image 第4枚未收集
++						147 image 第5枚未收集
+~					148 text 英雄已点亮，继续收集下一位
++					149 button 继续收集
++				150 container 思 思维训练
++					151 heading 思 思维训练, Value: 2, ID: course-thinking
++						152 text 思
++						153 text 思维训练
++					154 container 奥特曼，未点亮
++						155 image 奥特曼
++					156 container
++						157 text 0  / 5
++					158 content list 已收集 0 枚，共 5 枚
++						159 image 第1枚未收集
++						160 image 第2枚未收集
++						161 image 第3枚未收集
++						162 image 第4枚未收集
++						163 image 第5枚未收集
++					164 text 看完5个视频，合成英雄
++					165 button 开始学习
++				166 container 拼 快乐拼音
++					167 heading 拼 快乐拼音, Value: 2, ID: course-pinyin
++						168 text 拼
++						169 text 快乐拼音
++					170 container 奥特曼，已点亮
++						171 image 奥特曼
++						172 text 已点亮
++					173 container
++						174 text 新一轮 0  / 5
++					175 content list 已收集 0 枚，共 5 枚
++						176 image 第1枚未收集
++						177 image 第2枚未收集
++						178 image 第3枚未收集
++						179 image 第4枚未收集
++						180 image 第5枚未收集
++					181 text 英雄已点亮，继续收集下一位
++					182 button 继续收集
++				183 container 数 数学启蒙
++					184 heading 数 数学启蒙, Value: 2, ID: course-math
++						185 text 数
++						186 text 数学启蒙
++					187 container 奥特曼，未点亮
++						188 image 奥特曼
++					189 container
++						190 text 1  / 5
++					191 content list 已收集 1 枚，共 5 枚
++						192 image 第1枚已收集
++						193 image 第2枚未收集
++						194 image 第3枚未收集
++						195 image 第4枚未收集
++						196 image 第5枚未收集
++					197 text 再看4个视频，点亮英雄
++					198 button 继续学习
++				199 container 阅 趣味阅读
++					200 heading 阅 趣味阅读, Value: 2, ID: course-reading
++						201 text 阅
++						202 text 趣味阅读
++					203 container 奥特曼，未点亮
++						204 image 奥特曼
++					205 container
++						206 text 0  / 5
++					207 content list 已收集 0 枚，共 5 枚
++						208 image 第1枚未收集
++						209 image 第2枚未收集
++						210 image 第3枚未收集
++						211 image 第4枚未收集
++						212 image 第5枚未收集
++					213 text 看完5个视频，合成英雄
++					214 button 开始学习
+The focused UI element is 22 button 验证异常与合成状态, ID: test-edges

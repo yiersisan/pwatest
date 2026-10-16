@@ -53,11 +53,11 @@ class Video extends Element {
   canPlayType() { return 'probably'; }
   metadata(duration = 100) { this.currentSrc = this.src; this.readyState = 1; this.duration = duration; this.fire('loadedmetadata'); }
 }
-function app(initial = null, storageBlocked = false) {
+function app(initial = null, storageBlocked = false, coursePlayer = null) {
   const els = Object.fromEntries([...fs.readFileSync(path.join(__dirname, '../report.html'), 'utf8').matchAll(/id="([^"]+)"/g)].map(x => [x[1], new Element()]));
   els.video = new Video();
   const doc = new EventTarget(); doc.getElementById = id => els[id]; doc.createElement = tag => new Element(tag);
-  const win = new EventTarget(); win.PlayerCore = Core;
+  const win = new EventTarget(); win.PlayerCore = Core; win.CoursePlayer = coursePlayer;
   const store = new Map(initial ? [[Core.STORAGE_KEY, initial]] : []);
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8'), {
     window: win, document: doc, navigator: { onLine: true }, URL, Date,
@@ -135,4 +135,16 @@ test('media diagnostics expose the error without exposing signed URLs', () => {
   assert.match(report, /错误代码：4/); assert.match(report, /\[媒体地址\]/);
   assert(!report.includes('secret-token'));
   assert.equal(instance.els['direct-video'].href, url);
+});
+
+test('course rewards only receive valid ended callbacks, never imports, starts or stale media', () => {
+ const completions=[],imports=[];
+ const instance=app(null,false,{launch(){},imported(record){imports.push(record.id);},completed(record){completions.push(record.id);}});
+ instance.els['video-url'].value=url;instance.els['import-form'].fire('submit');
+ assert.equal(imports.length,1);assert.equal(completions.length,0);
+ instance.els.video.fire('ended');assert.equal(completions.length,0);
+ instance.els.video.metadata();instance.els.video.fire('ended');assert.equal(completions.length,0);
+ instance.els.video.ended=true;instance.els.video.currentSrc='https://example.com/stale.mp4';instance.els.video.fire('ended');assert.equal(completions.length,0);
+ instance.els.video.currentSrc=instance.els.video.src;instance.els.video.fire('ended');
+ assert.equal(completions[0],Core.identity(url));assert.equal(completions.length,1);
 });

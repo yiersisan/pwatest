@@ -59,7 +59,7 @@
       data = next;
       try { completed = Core.completedFrom(localStorage.getItem(Core.STORAGE_KEY), data); }
       catch { completed = Core.completedFrom(null, data); $('demo-storage').hidden = false; }
-      render();
+      render(); restoreHomePosition();
     } catch {
       if (generation !== loadGeneration) return;
       $('learning-error').hidden = false;
@@ -110,8 +110,7 @@
     if (!target) return;
     if (target.dataset.lesson) { openLesson(target.dataset.lesson); return; }
     switch (target.dataset.action) {
-      case 'profile': show('小小奥特曼', '这是示例昵称和头像，尚未接入账号及个人资料服务。'); break;
-      case 'content': show('内容中心', '选择一节演示课程，看看接下来的学习内容。真实视频导入在「定制」中。', (data?.lessons || []).map(l => ({ label: l.title, run: () => openLesson(l.id) }))); break;
+      case 'profile': show(window.LearningProfile?.name || '学习资料', '这是示例昵称和头像，尚未接入账号及个人资料服务。'); break;
       case 'feedback': show('英语 · 点评', '首页的 10 条为设计示例数量，未接入真实老师点评、列表或音视频；这里不会播放虚构点评。'); break;
       case 'weekend': show('FUN WEEKEND', Core.weekend(new Date()) ? '今天是周末！这是活动入口演示，尚未接入真实活动内容。开放时间按本机日期判断。' : '周六至周日开放，周末再来一起玩吧！当前为活动入口演示，按本机日期判断。'); break;
       case 'install': show('添加到主屏幕', '在 iPad Safari 中打开本站，点击分享按钮，再选择「添加到主屏幕」。建议横屏使用。首次联网并显示离线首页已准备好后，可离线打开首页；视频仍需联网。', [], '使用说明'); break;
@@ -135,5 +134,27 @@
   window.addEventListener('resize', () => rails.forEach(updateRail));
   if ('ResizeObserver' in window) { const observer = new ResizeObserver(() => rails.forEach(updateRail)); rails.forEach(rail => observer.observe(rail)); }
   $('retry-home').addEventListener('click', loadHome);
+  const profile = window.LearningProfile;
+  if (profile) {
+    root.querySelector('.profile-name').textContent = profile.name;
+    root.querySelector('.avatar').dataset.art = profile.art;
+    root.querySelector('.profile').setAttribute('aria-label', '查看' + profile.name + '资料' + (profile.source === 'demo' ? '（演示）' : ''));
+  }
+  function saveHomePosition() {
+    try { sessionStorage.setItem('pwatest-home-position', JSON.stringify({ y: window.scrollY, rails: rails.map(r => r.scrollLeft) })); } catch { /* 系统 history 仍可恢复 */ }
+  }
+  function restoreHomePosition() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('pwatest-home-position'));
+      if (!saved || !Array.isArray(saved.rails)) return;
+      requestAnimationFrame(() => {
+        rails.forEach((r,i) => { r.scrollLeft = Number(saved.rails[i]) || 0; updateRail(r); });
+        window.scrollTo(0, Number(saved.y) || 0);
+      });
+    } catch { /* 首次进入或存储不可用 */ }
+  }
+  $('open-content-center').addEventListener('click', saveHomePosition);
+  window.addEventListener('pagehide', saveHomePosition);
+  window.addEventListener('pageshow', event => { if (event.persisted) restoreHomePosition(); });
   mountArt(); loadHome();
 })();

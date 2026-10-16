@@ -16,6 +16,7 @@
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="stylesheet" href="./home.css">
   <script src="./learning-core.js" defer></script>
+  <script src="./profile.js" defer></script>
   <script src="./home.js" defer></script>
   <script src="./pwa.js" defer></script>
 </head>
@@ -28,7 +29,7 @@
         <span class="profile-copy"><span class="profile-name">小小奥特曼</span><span class="greeting"><svg class="icon" aria-hidden="true"><use href="#sprout"></use></svg>每天进步一点点</span></span>
       </button>
       <nav class="home-nav" aria-label="功能入口">
-        <button type="button" data-action="content"><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#book"></use></svg></span>内容中心</button>
+        <a href="./content-center.html" id="open-content-center"><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#book"></use></svg></span>内容中心</a>
         <a href="./report.html"><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#report"></use></svg></span>定制</a>
       </nav>
     </header>
@@ -49,7 +50,7 @@
     <footer class="home-footer">
       <p>左右滑动，发现更多学习内容</p>
       <p class="demo-note">课程与点评为演示内容 · 「定制」可导入并播放真实视频</p>
-      <div class="home-meta"><span id="pwa-status" role="status">正在准备离线首页…</span><button type="button" data-action="install">添加到主屏幕</button><span>v4.0.1</span></div>
+      <div class="home-meta"><span id="pwa-status" role="status">正在准备离线首页…</span><button type="button" data-action="install">添加到主屏幕</button><span>v4.1.0</span></div>
     </footer>
     <div class="update-notice" id="pwa-update" role="status" hidden><span>新版本已准备好</span><button id="pwa-apply" type="button">更新并重新加载</button></div>
     <dialog class="home-dialog" id="home-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-body">

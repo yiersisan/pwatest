@@ -1,7 +1,9 @@
 // 一个 scope、一套版本化资源；完整安装后等待用户选择更新。
 const CACHE_PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = `${CACHE_PREFIX}v8`;
-const ASSETS = ['./', './index.html', './report.html', './home.css', './home.js', './learning-core.js',
+const CACHE = `${CACHE_PREFIX}v12`;
+const ASSETS = ['./content-center.html', './content-center.css', './content-center.js', './content-config.js',
+  './content-demo.js', './reward-core.js', './reward-store.js', './course-player.js', './profile.js', './assets/icons/energy-star.svg',
+  './', './index.html', './report.html', './home.css', './home.js', './learning-core.js',
   './learning-data.json', './pwa.js', './app.js', './player-core.js', './styles.css', './manifest.json',
   './favicon.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './assets/asset-manifest.json', './assets/icons/sprite.svg', './assets/images/illustration-atlas.png'];

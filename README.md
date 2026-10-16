@@ -3,13 +3,14 @@
 原生 HTML/CSS/JavaScript 的幼儿学习首页，沿用已有视频链接播放器，无框架、构建步骤或远程 CDN 依赖。
 
 - 首页：`index.html`，今日任务与本周任务独立横滑。
+- 内容中心：`content-center.html`，本机课程关联、完成奖励、五枚合成英雄；实现与验收见 [内容中心文档](docs/06-content-center.md)。
 - 定制：`report.html`，真实视频导入、播放记录与断点续播；原来的存储键和播放方式保留。
 - 首页课程、资料、点评与周末活动均为明确标注的演示，不接入真实课程后台。
-- 当前首页 v4.0.1，播放器逻辑仍为 v3.2，Service Worker 缓存 v8。
+- 当前首页与内容中心 v4.1.0，播放器逻辑仍为 v3.2，Service Worker 缓存 v12。
 
 ## 实现文档
 
-从 [docs 文档索引](docs/README.md) 查找实现方式；本次改动见[学习首页实现与验收](docs/05-learning-home.md)。后续新增文档时同步更新索引。
+从 [docs 文档索引](docs/README.md) 查找实现方式；本次改动见[内容中心实现与验收](docs/06-content-center.md)，首页基础见[学习首页实现与验收](docs/05-learning-home.md)。后续新增文档时同步更新索引。
 
 ## 本机运行
 
@@ -19,7 +20,7 @@ Node.js 18+，在项目根目录执行：
 node scripts/serve.cjs
 ```
 
-打开 <http://127.0.0.1:8080/pwatest/>。六种视口检查工具位于 <http://127.0.0.1:8080/pwatest/scripts/visual-check.html>。
+打开 <http://127.0.0.1:8080/pwatest/>。内容中心验收工具位于 <http://127.0.0.1:8080/pwatest/scripts/content-check.html>。首页六种视口检查工具位于 <http://127.0.0.1:8080/pwatest/scripts/visual-check.html>。
 
 开发服务器仅监听本机；iPad 安装、回弹与离线验收请使用 HTTPS 部署站点。`file://` 或局域网 HTTP 不代表 PWA 能正常安装。
 
@@ -43,5 +44,5 @@ node --test tests/*.test.cjs
 - 首页根背景及 Manifest 主题色为 `#12AD65`，内容区为薄荷绿；真实 Safari 回弹、安全区、工具栏和独立 PWA 模式仍需真机测试。
 - 用户视频仍由原生 `<video>` 播放，没有加入 HLS.js、代理、分享页解析、签名刷新或离线视频下载。
 - 网盘临时链接能否播放取决于源站响应、权限、有效期和设备解码能力。默认链接由用户指定，已在源码中；文档不再复制签名参数。
-- 视频记录保存在 `pwatest-video-history-v1`，演示状态使用独立的 `pwatest-learning-demo-v1`，不跨设备同步。旧备忘录数据没有删除。
+- 课程奖励使用 IndexedDB `pwatest-course-rewards-v1`；视频记录保存在 `pwatest-video-history-v1`，演示状态使用独立的 `pwatest-learning-demo-v1`，不跨设备同步。旧备忘录数据没有删除。
 - 包内插画使用共享 atlas；SVG 图标内联。保留用户之前指定的 PWA 安装图标。未将设计参考图用作页面背景。

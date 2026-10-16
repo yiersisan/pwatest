@@ -1,0 +1,60 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>内容中心验收工具</title><style>body{margin:0;font:14px system-ui;background:#eee;color:#123}header{padding:10px;background:white;position:sticky;top:0;z-index:2}button{padding:10px;margin:3px}iframe{display:block;border:0;margin:12px 0}pre{white-space:pre-wrap;margin:8px;max-height:160px;overflow:auto;font-size:12px}h1{font-size:16px;margin:0}</style>
+<header><h1>内容中心验收 · 真实 CSS 视口，不缩放 · 奖励测试使用独立临时数据库</h1><nav id="sizes"></nav><nav id="scenarios"></nav><button id="measure">读取布局指标</button><button id="all-layouts">检查全部视口</button><button id="test-idb">验证真实 IndexedDB 事务</button><button id="test-edges">验证异常与合成状态</button><button id="test-nav">验证首页往返位置</button><pre id="result">等待页面加载</pre></header>
+<iframe id="preview" title="内容中心预览" src="../content-center.html#demo" width="1024" height="768"></iframe>
+<script src="../content-config.js"></script><script src="../reward-core.js"></script><script src="../reward-store.js"></script>
+<script>
+const frame=document.querySelector('#preview'),out=document.querySelector('#result');
+const sizes=[[1024,768],[1180,820],[1366,1024],[768,1024],[507,820]];
+let selected=sizes[0];
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+function metrics(){const d=frame.contentDocument,cards=[...d.querySelectorAll('.course-card')],r=el=>el.getBoundingClientRect();return{viewport:selected,pageWidth:d.documentElement.clientWidth,scrollWidth:d.documentElement.scrollWidth,noPageOverflow:d.documentElement.scrollWidth<=d.documentElement.clientWidth+1,columns:cards.length>1&&Math.abs(r(cards[0]).top-r(cards[1]).top)<2?2:1,firstTwoRowsVisible:cards.length>=4?r(cards[3]).bottom<=selected[1]:null,cards:cards.map(c=>{const hero=r(c.querySelector('.hero-badge')),stars=r(c.querySelector('.energy-progress')),cta=r(c.querySelector('.learn-button')),copy=r(c.querySelector('.course-actions p'));return{title:c.querySelector('h2').textContent.trim(),progress:c.querySelector('.reward-progress').textContent.trim(),stars:c.querySelectorAll('.energy-progress li').length,starsBelowHero:stars.top>=hero.bottom,starWidths:[...c.querySelectorAll('.energy-progress li')].map(e=>r(e).width),button48:cta.height>=48,footerNoOverlap:copy.right<=cta.left||copy.bottom<=cta.top,cardHeight:Math.round(r(c).height)}}),imageFailures:d.querySelectorAll('.asset-missing').length,error:d.querySelector('#error-detail')?.textContent||'',empty:d.querySelector('#content-status')?.textContent||''}}
+function measure(){out.textContent=JSON.stringify(metrics(),null,1)}
+for(const size of sizes){const b=document.createElement('button');b.textContent=size.join(' × ');b.onclick=async()=>{selected=size;frame.width=size[0];frame.height=size[1];await pause(100);measure()};document.querySelector('#sizes').append(b)}
+for(const [label,hash] of [['我的课程',''],['设计示例','#demo'],['长标题','#demo-long'],['无课程','#demo-empty'],['加载失败','#demo-error'],['图片失败','#demo-images'],['5/5合成','#demo-five']]){const b=document.createElement('button');b.textContent=label;b.onclick=()=>{frame.src='../content-center.html'+hash};document.querySelector('#scenarios').append(b)}
+document.querySelector('#measure').onclick=measure;
+frame.onload=()=>{setTimeout(measure,200)};
+document.querySelector('#all-layouts').onclick=async()=>{const results=[];for(const size of sizes){selected=size;frame.width=size[0];frame.height=size[1];await pause(130);results.push(metrics())}out.textContent=JSON.stringify(results,null,1)};
+document.querySelector('#test-edges').onclick=async()=>{
+ const results=[];
+ for(const scenario of ['long','empty','error','images','five']){
+  frame.src='../content-center.html#demo-'+scenario;
+  await pause(350);
+  const m=metrics(),d=frame.contentDocument;
+  const result={scenario,noPageOverflow:m.noPageOverflow,cards:m.cards.length,footerNoOverlap:m.cards.every(c=>c.footerNoOverlap),starsBelowHero:m.cards.every(c=>c.starsBelowHero),errorVisible:!d.querySelector('#content-error').hidden,emptyVisible:!d.querySelector('#content-status').hidden,imageFailures:m.imageFailures,progress:m.cards[0]?.progress};
+  if(scenario==='five'){await pause(2100);result.after=metrics().cards[0]?.progress;result.unlocked=Boolean(frame.contentDocument.querySelector('[data-course-card="english"] .is-unlocked'));}
+  results.push(result);
+ }
+ out.textContent=JSON.stringify(results,null,1);
+};
+const assert=(value,message)=>{if(!value)throw Error(message)};
+document.querySelector('#test-idb').onclick=async()=>{
+ const lines=[];out.textContent='测试中…';
+ try{
+  const name='pwatest-reward-validation-'+Date.now(), options={indexedDB,core:RewardCore,config:ContentConfig,name};
+  const a=createRewardStore(options),b=createRewardStore(options);
+  await a.bind('english','test-1');const before=await a.read();assert(!before.courses.english,'关联不得发奖');lines.push('PASS 关联视频不发奖');
+  await Promise.all(Array.from({length:20},(_,i)=>(i%2?a:b).complete({videoId:'test-1',valid:true,at:1})));
+  assert((await b.read()).courses.english.total===1,'并发去重失败');lines.push('PASS 两个数据库连接并发20次完成仅计1次');
+  for(let i=2;i<=5;i++){await a.bind('english','test-'+i);await a.complete({videoId:'test-'+i,valid:true,at:i})}
+  const reopened=createRewardStore(options),saved=await reopened.read();assert(saved.courses.english.total===5&&saved.courses.english.roundCount===0&&saved.courses.english.latest==='ultraman'&&saved.feedback.length===1,'合成持久化失败');lines.push('PASS 未执行动画即重新打开：累计5、已解锁、轮次0、待反馈均保存');
+  await reopened.complete({videoId:'test-5',valid:true,at:6});assert((await reopened.read()).courses.english.total===5,'重启重复计奖');lines.push('PASS 重新打开后的重复回调不计奖');
+  await reopened.acknowledge('test-5');assert((await reopened.read()).courses.english.total===5,'反馈清除奖励');lines.push('PASS 确认动画只清反馈，不清累计及英雄');
+  await a.bind('math','math-1');await b.complete({videoId:'math-1',valid:true,at:7});assert((await a.read()).courses.math.total===1&&(await a.read()).courses.english.total===5,'课程混淆');lines.push('PASS 课程状态独立');
+  await a.relink('test-1','renewed');await b.complete({videoId:'renewed',valid:true,at:8});assert((await a.read()).courses.english.total===5,'替换链接重复计奖');lines.push('PASS 替换视频链接保留完成身份');
+  try{await a.bind('math','test-1');throw Error('事务应该拒绝')}catch(e){assert(e.message!=='事务应该拒绝','错误关联未拒绝')}
+  assert((await a.read()).bindings['test-1']==='english','失败事务修改状态');lines.push('PASS 失败事务回滚，不损坏原记录');
+  out.textContent=lines.join('\n');
+ }catch(e){out.textContent=lines.join('\n')+'\nFAIL '+e.message}
+};
+document.querySelector('#test-nav').onclick=async()=>{
+ try{
+  frame.src='../index.html';await new Promise(r=>frame.onload=r);await pause(300);
+  const d=frame.contentDocument,w=frame.contentWindow,rails=[...d.querySelectorAll('.rail')];
+  rails[0].scrollLeft=250;rails[1].scrollLeft=350;w.scrollTo(0,180);const before=[w.scrollY,...rails.map(r=>r.scrollLeft)];
+  d.querySelector('#open-content-center').click();await pause(500);assert(frame.contentDocument.querySelector('#course-grid'),'未进入内容中心');
+  frame.contentDocument.querySelector('#center-back').click();await pause(600);
+  const after=[frame.contentWindow.scrollY,...frame.contentDocument.querySelectorAll('.rail')].map((r,i)=>i?r.scrollLeft:r);
+  assert(JSON.stringify(before)===JSON.stringify(after),'位置未恢复 '+JSON.stringify({before,after}));out.textContent='PASS 首页 → 内容中心 → 返回，页面与两条横滑位置恢复 '+JSON.stringify(after);
+ }catch(e){out.textContent='FAIL '+e.message}
+};
+</script></html>
