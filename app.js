@@ -183,10 +183,5 @@
   networkStatus(); renderHistory();
   updateDiagnostics();
   if (records[0]) status('上次看到「' + records[0].title + '」' + Core.time(records[0].position) + '，点击记录中的播放按钮继续。');
-  if ('serviceWorker' in navigator && window.isSecureContext) {
-    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-      .then(() => navigator.serviceWorker.ready)
-      .then(() => { $('offline-status').textContent = '页面已可离线打开；视频仍需联网。播放记录仅保存在本机。'; })
-      .catch(() => { $('offline-status').textContent = '页面离线准备未完成，请联网后刷新重试。'; });
-  }
+  window.addEventListener('pwatest:before-update', saveProgress);
 })();

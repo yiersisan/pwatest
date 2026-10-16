@@ -12,6 +12,7 @@ function setup() {
   let body = 'original';
   let status = 200;
   let failWrites = false;
+  let skips = 0;
   const key = request => typeof request === 'string' ? request : request.url;
   const caches = {
     async open(name) {
@@ -33,12 +34,14 @@ function setup() {
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../sw.js'), 'utf8'), {
     self: { registration: { scope }, addEventListener: (name, fn) => handlers[name] = fn,
-      skipWaiting: async () => {}, clients: { claim: async () => {} } },
+      skipWaiting: async () => { skips++; }, clients: { claim: async () => {} } },
     caches, Request, Response, URL, console: { warn() {} },
     fetch: async () => { if (!online) throw new Error('offline'); return new Response(body, { status }); }
   });
   return {
     caches, stores,
+    skips: () => skips,
+    message(data) { let result; handlers.message({ data, waitUntil(p) { result = p; } }); return result; },
     setNetwork(value, text = body, code = 200) { online = value; body = text; status = code; },
     failWrites() { failWrites = true; },
     lifecycle(name) { let result; handlers[name]({ waitUntil(p) { result = p; } }); return result; },
@@ -52,12 +55,25 @@ test('first installation supports offline root and manifest start URL', async ()
   assert.equal(await (await app.fetch(scope + 'index.html')).text(), 'original');
 });
 
-test('online updates replace both cached page URLs for the next offline visit', async () => {
-  const app = setup(); await app.lifecycle('install'); app.setNetwork(true, 'updated');
-  assert.equal(await (await app.fetch(scope)).text(), 'updated');
-  app.setNetwork(false);
-  assert.equal(await (await app.fetch(scope + 'index.html')).text(), 'updated');
-  assert.equal(await (await app.fetch(scope)).text(), 'updated');
+test('active version remains consistent until the user activates a new worker', async () => {
+  const app = setup(); await app.lifecycle('install'); app.setNetwork(true, 'new deployment');
+  assert.equal(await (await app.fetch(scope)).text(), 'original');
+  assert.equal(await (await app.fetch(scope + 'home.js')).text(), 'original');
+  assert.equal(app.skips(), 0);
+  await app.message({ type: 'ACTIVATE_UPDATE' }); assert.equal(app.skips(), 1);
+});
+
+test('a network cache miss refreshes both root aliases', async () => {
+  const app = setup(); app.setNetwork(true, 'fresh');
+  assert.equal(await (await app.fetch(scope)).text(), 'fresh'); app.setNetwork(false);
+  assert.equal(await (await app.fetch(scope + 'index.html')).text(), 'fresh');
+});
+
+test('offline cache includes the report, atlas, icons and learning data', async () => {
+  const app = setup(); await app.lifecycle('install'); app.setNetwork(false);
+  for (const file of ['report.html', 'home.js', 'home.css', 'learning-data.json', 'pwa.js', 'assets/images/illustration-atlas.png', 'assets/icons/sprite.svg']) {
+    assert.equal(await (await app.fetch(scope + file)).text(), 'original', file);
+  }
 });
 
 test('server failures do not overwrite usable offline content', async () => {
@@ -75,7 +91,7 @@ test('cache cleanup preserves other applications', async () => {
 });
 
 test('quota errors still return fresh network content', async () => {
-  const app = setup(); await app.lifecycle('install'); app.failWrites(); app.setNetwork(true, 'fresh');
+  const app = setup(); app.failWrites(); app.setNetwork(true, 'fresh');
   assert.equal(await (await app.fetch(scope)).text(), 'fresh');
 });
 

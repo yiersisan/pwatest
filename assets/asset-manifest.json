@@ -1,0 +1,72 @@
+{
+  "illustrations": {
+    "avatar-ultraman": {
+      "path": "images/illustration-atlas.png",
+      "column": 0,
+      "row": 0
+    },
+    "avatar-teacher": {
+      "path": "images/illustration-atlas.png",
+      "column": 1,
+      "row": 0
+    },
+    "cover-weekend": {
+      "path": "images/illustration-atlas.png",
+      "column": 2,
+      "row": 0
+    },
+    "cover-bear": {
+      "path": "images/illustration-atlas.png",
+      "column": 3,
+      "row": 0
+    },
+    "cover-fruits": {
+      "path": "images/illustration-atlas.png",
+      "column": 0,
+      "row": 1
+    },
+    "cover-giraffe": {
+      "path": "images/illustration-atlas.png",
+      "column": 1,
+      "row": 1
+    },
+    "cover-cake": {
+      "path": "images/illustration-atlas.png",
+      "column": 2,
+      "row": 1
+    },
+    "cover-zebra": {
+      "path": "images/illustration-atlas.png",
+      "column": 3,
+      "row": 1
+    }
+  },
+  "atlas": {
+    "path": "images/illustration-atlas.png",
+    "width": 1774,
+    "height": 887,
+    "columns": 4,
+    "rows": 2,
+    "order": [
+      "avatar-ultraman",
+      "avatar-teacher",
+      "cover-weekend",
+      "cover-bear",
+      "cover-fruits",
+      "cover-giraffe",
+      "cover-cake",
+      "cover-zebra"
+    ]
+  },
+  "note": "运行时使用包内共享 atlas，按实际 1774×887 / 4×2 参数裁切；originalIllustrations 仅记录原包 SVG 文件名，不是运行时文件路径。图标使用 icons/sprite.svg。 图标 symbol 已内联到 index.html 以保证 Safari 离线显示。",
+  "originalIllustrations": {
+    "avatar-ultraman": "images/avatar-ultraman.svg",
+    "avatar-teacher": "images/avatar-teacher.svg",
+    "cover-weekend": "images/cover-weekend.svg",
+    "cover-bear": "images/cover-bear.svg",
+    "cover-fruits": "images/cover-fruits.svg",
+    "cover-giraffe": "images/cover-giraffe.svg",
+    "cover-cake": "images/cover-cake.svg",
+    "cover-zebra": "images/cover-zebra.svg"
+  }
+}

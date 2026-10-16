@@ -1,0 +1,12 @@
+{
+  "mode": "demo",
+  "requiredIds": ["fruits", "yummy", "cake"],
+  "initialCompleted": ["fruits"],
+  "lessons": [
+    {"id":"fruits","title":"Yummy Fruits","image":"cover-fruits","lesson":1,"level":"30L","minutes":8},
+    {"id":"yummy","title":"Yummy!","image":"cover-giraffe","lesson":2,"level":"60L","minutes":8},
+    {"id":"cake","title":"Yummy Cake","image":"cover-cake","lesson":3,"level":"80L","minutes":8},
+    {"id":"zebra","title":"斑马故事","image":"cover-zebra","lesson":4,"level":"70L","minutes":8},
+    {"id":"bear","title":"英语小课堂","image":"cover-bear","lesson":5,"level":"入门","minutes":8}
+  ]
+}

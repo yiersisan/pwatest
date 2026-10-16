@@ -54,7 +54,7 @@ class Video extends Element {
   metadata(duration = 100) { this.currentSrc = this.src; this.readyState = 1; this.duration = duration; this.fire('loadedmetadata'); }
 }
 function app(initial = null, storageBlocked = false) {
-  const els = Object.fromEntries([...fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').matchAll(/id="([^"]+)"/g)].map(x => [x[1], new Element()]));
+  const els = Object.fromEntries([...fs.readFileSync(path.join(__dirname, '../report.html'), 'utf8').matchAll(/id="([^"]+)"/g)].map(x => [x[1], new Element()]));
   els.video = new Video();
   const doc = new EventTarget(); doc.getElementById = id => els[id]; doc.createElement = tag => new Element(tag);
   const win = new EventTarget(); win.PlayerCore = Core;
