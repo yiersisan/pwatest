@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <!-- 关键：让 iPad 全屏运行、可添加到主屏幕 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>我的备忘录</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; font-family: -apple-system, "PingFang SC", sans-serif;
+      background: linear-gradient(160deg, #1e1b4b, #312e81);
+      color: #fff; min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .app { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: 26px; margin: 8px 0 20px; display: flex; align-items: center; gap: 10px; }
+    h1 img { width: 40px; height: 40px; border-radius: 10px; }
+    .input-row { display: flex; gap: 8px; }
+    input {
+      flex: 1; padding: 14px; border: none; border-radius: 12px;
+      font-size: 17px; outline: none;
+    }
+    button {
+      padding: 14px 20px; border: none; border-radius: 12px;
+      background: #6366f1; color: #fff; font-size: 17px; cursor: pointer;
+    }
+    button:active { transform: scale(0.95); }
+    ul { list-style: none; padding: 0; margin-top: 20px; }
+    li {
+      background: rgba(255,255,255,0.1); margin-bottom: 8px;
+      padding: 14px; border-radius: 12px; display: flex;
+      justify-content: space-between; align-items: center; font-size: 17px;
+    }
+    li span.del { color: #f87171; cursor: pointer; padding: 4px 8px; }
+    .tip { font-size: 13px; color: #a5b4fc; margin-top: 24px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1><img src="icon-192.png" alt="" width="40" height="40">我的备忘录</h1>
+    <div class="input-row">
+      <input id="txt" placeholder="要做点什么？" />
+      <button onclick="add()">添加</button>
+    </div>
+    <ul id="list"></ul>
+    <p class="tip">在 Safari 点「分享 → 添加到主屏幕」，即可像 App 一样使用。首次联网加载并完成离线准备后，可离线打开；备忘录仅保存在当前设备。</p>
+    <p class="tip" id="offline-status" role="status"></p>
+  </div>
+  <script>
+    const KEY = 'memo-items';
+    const load = () => JSON.parse(localStorage.getItem(KEY) || '[]');
+    const save = d => localStorage.setItem(KEY, JSON.stringify(d));
+    function render() {
+      const list = document.getElementById('list');
+      list.innerHTML = load().map((t, i) =>
+        `<li>${t}<span class="del" onclick="del(${i})">删除</span></li>`).join('');
+    }
+    function add() {
+      const el = document.getElementById('txt');
+      if (!el.value.trim()) return;
+      const d = load(); d.push(el.value.trim()); save(d);
+      el.value = ''; render();
+    }
+    function del(i) { const d = load(); d.splice(i, 1); save(d); render(); }
+    document.getElementById('txt').addEventListener('keydown', e => {
+      if (e.key === 'Enter') add();
+    });
+    render();
+    // 注册 Service Worker（必须 HTTPS 或 localhost）
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+        .then(() => navigator.serviceWorker.ready)
+        .then(() => { document.getElementById('offline-status').textContent = '离线准备完成'; })
+        .catch(() => { document.getElementById('offline-status').textContent = '离线准备未完成，请联网后刷新重试。'; });
+    }
+  </script>
+</body>
+</html>
