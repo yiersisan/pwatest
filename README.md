@@ -26,7 +26,10 @@
 GitHub Pages 使用 `main` 分支及 `/ (root)`，通过 HTTPS 访问。
 `sw.js` 预缓存根页面、HTML、JavaScript、样式、清单和图标；网络优先，失败时回退本应用缓存。
 根地址和 `index.html` 共用页面更新；不会拦截第三方视频请求。
-发布时递增 Service Worker 缓存版本，本版为 v3。
+发布时递增 Service Worker 缓存版本，本版为 v4，页面版本 v3.1。
+
+页面通过头部 `meta name="referrer" content="no-referrer"` 不发送来源地址。
+2026-10-17 对默认链接的请求对比显示：携带本站 Referer 返回 403（31326），不携带时返回 HLS 清单，首个分片范围请求返回 206 和 TS 数据。此检查不等同于完整视频播放或 iPad 真机验收。
 
 ## 验证
 

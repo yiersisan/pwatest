@@ -1,6 +1,6 @@
 // 每次发布修改此版本；缓存名包含部署路径，避免影响同域下的其他 PWA。
 const CACHE_PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = `${CACHE_PREFIX}v3`;
+const CACHE = `${CACHE_PREFIX}v4`;
 const ASSETS = ['./', './index.html', './app.js', './player-core.js', './styles.css', './manifest.json', './favicon.png',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const HOME = new URL('./index.html', self.registration.scope).href;
