@@ -15,7 +15,21 @@
   function persist() {
     try { localStorage.setItem(Core.STORAGE_KEY, JSON.stringify(records)); } catch { storageWarning(); }
   }
-  function status(message) { $('player-status').textContent = message; }
+  function updateDiagnostics() {
+    const codes = { 1: '播放被取消', 2: '媒体网络错误', 3: '媒体解码失败', 4: '媒体源无法加载或格式不支持' };
+    const code = video.error?.code || 0;
+    const detail = String(video.error?.message || '').replace(/https?:\/\/[^\s"<>]+/g, '[媒体地址]').slice(0, 300);
+    $('playback-diagnostics').textContent = [
+      '页面脚本版本：v3.2',
+      '原生 HLS 支持：' + (video.canPlayType('application/vnd.apple.mpegurl') || '未声明支持'),
+      '错误代码：' + (code ? code + '（' + (codes[code] || '未知错误') + '）' : '无'),
+      '错误详情：' + (detail || '浏览器未提供'),
+      '就绪状态：' + video.readyState + '；网络状态：' + video.networkState,
+      '视频来源：' + (current ? new URL(current.url).hostname : '尚未选择'),
+      '页面提示：' + $('player-status').textContent
+    ].join('\n');
+  }
+  function status(message) { $('player-status').textContent = message; updateDiagnostics(); }
   function message(text) { $('form-status').textContent = text; $('form-status').hidden = !text; }
   function progressText(item) {
     if (item.completed) return '已看完 · ' + Core.time(item.duration || item.position);
@@ -52,6 +66,7 @@
           clearTimeout(loadTimer); video.pause(); video.removeAttribute('src'); video.load(); video.hidden = true;
           $('empty-player').hidden = false; $('current-title').textContent = '准备好，开始播放'; $('current-source').textContent = '';
           $('restart').disabled = true; status('记录已删除，可导入其他视频。');
+          $('direct-video').hidden = true; $('direct-video').removeAttribute('href'); updateDiagnostics();
         }
         if (editId === item.id) resetForm();
         records = records.filter(record => record.id !== item.id); persist(); renderHistory();
@@ -84,9 +99,11 @@
     item.updatedAt = Date.now(); records = [item, ...records.filter(record => record.id !== item.id)]; persist();
     $('current-title').textContent = item.title; $('current-source').textContent = new URL(item.url).hostname;
     $('empty-player').hidden = true; video.hidden = false; $('restart').disabled = false;
+    $('direct-video').href = item.url; $('direct-video').hidden = false;
     status(pendingResume > 0 ? '正在加载，将从 ' + Core.time(pendingResume) + ' 继续…' : '正在加载视频…');
     // 交给 Safari 原生 HLS 播放器，不设置 crossorigin，也不通过 fetch 读取清单。
     video.src = item.url; video.load();
+    updateDiagnostics();
     clearTimeout(loadTimer);
     loadTimer = setTimeout(() => {
       if (!mediaReady) status('加载时间较长。链接可能已失效或需要网盘登录，请重试或替换链接。');
@@ -135,6 +152,8 @@
     else status('视频未能加载：链接可能过期、需要网盘登录或不允许外站播放。请在记录中替换链接后重试。');
   }
   video.addEventListener('error', showMediaError);
+  video.addEventListener('loadstart', updateDiagnostics);
+  video.addEventListener('stalled', updateDiagnostics);
   $('restart').addEventListener('click', () => { if (current) select(current, true, true); });
   function resetForm() {
     editId = null; $('cancel-edit').hidden = true; $('import-button').textContent = '导入视频'; message('');
@@ -162,6 +181,7 @@
   $('video-url').value = DEFAULT_URL;
   $('video-title').value = '百度网盘视频';
   networkStatus(); renderHistory();
+  updateDiagnostics();
   if (records[0]) status('上次看到「' + records[0].title + '」' + Core.time(records[0].position) + '，点击记录中的播放按钮继续。');
   if ('serviceWorker' in navigator && window.isSecureContext) {
     navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })

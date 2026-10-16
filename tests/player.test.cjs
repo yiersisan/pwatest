@@ -125,3 +125,14 @@ test('switching videos preserves the first progress and completion restarts at z
   instance.els['history-list'].children[0].children[3].children[0].fire('click');
   instance.els.video.metadata(); assert.equal(instance.els.video.currentTime, 0);
 });
+
+test('media diagnostics expose the error without exposing signed URLs', () => {
+  const instance = app();
+  instance.els['video-url'].value = url; instance.els['import-form'].fire('submit');
+  instance.els.video.error = { code: 4, message: 'Failed to load https://example.com/video?sign=secret-token' };
+  instance.els.video.fire('error');
+  const report = instance.els['playback-diagnostics'].textContent;
+  assert.match(report, /错误代码：4/); assert.match(report, /\[媒体地址\]/);
+  assert(!report.includes('secret-token'));
+  assert.equal(instance.els['direct-video'].href, url);
+});
