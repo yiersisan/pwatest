@@ -1,0 +1,94 @@
+{
+  "file": "hero-atlas.png",
+  "width": 1536,
+  "height": 1024,
+  "columns": 3,
+  "rows": 2,
+  "backgroundSize": "300% 200%",
+  "heroes": [
+    {
+      "id": "hero-01",
+      "subject": "英",
+      "theme": "classic",
+      "column": 0,
+      "row": 0,
+      "backgroundPosition": "0% 0%",
+      "cell": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    },
+    {
+      "id": "hero-02",
+      "subject": "思",
+      "theme": "seven",
+      "column": 1,
+      "row": 0,
+      "backgroundPosition": "50% 0%",
+      "cell": {
+        "x": 512.0,
+        "y": 0.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    },
+    {
+      "id": "hero-03",
+      "subject": "拼",
+      "theme": "tiga",
+      "column": 2,
+      "row": 0,
+      "backgroundPosition": "100% 0%",
+      "cell": {
+        "x": 1024.0,
+        "y": 0.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    },
+    {
+      "id": "hero-04",
+      "subject": "数",
+      "theme": "zero",
+      "column": 0,
+      "row": 1,
+      "backgroundPosition": "0% 100%",
+      "cell": {
+        "x": 0.0,
+        "y": 512.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    },
+    {
+      "id": "hero-05",
+      "subject": "阅",
+      "theme": "mebius",
+      "column": 1,
+      "row": 1,
+      "backgroundPosition": "50% 100%",
+      "cell": {
+        "x": 512.0,
+        "y": 512.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    },
+    {
+      "id": "hero-06",
+      "subject": "预留",
+      "theme": "z",
+      "column": 2,
+      "row": 1,
+      "backgroundPosition": "100% 100%",
+      "cell": {
+        "x": 1024.0,
+        "y": 512.0,
+        "width": 512.0,
+        "height": 512.0
+      }
+    }
+  ]
+}

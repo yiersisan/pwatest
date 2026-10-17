@@ -12,3 +12,7 @@
 ## 内容中心 v4.1.0
 
 详见 [内容中心实现与验收](../06-content-center.md)。`content-layout-check.txt` 为五种真实 CSS iframe 视口布局指标；`content-idb-check.txt` 为隔离测试数据库的事务验收；`content-navigation-check.txt` 为首页滚动恢复；`content-edge-check.txt` 为异常和合成状态；`content-offline-check.txt` / `content-center-offline.png` 为停止本地服务器后的页面重开证据。图片是桌面内置浏览器窄面板截图，不是iPad真机照片。
+
+## 内容中心左右布局 v4.3.0
+
+`content-horizontal-*` 是本次布局、奖励持久化、异常、首页返回和截图证据。截图为真实CSS尺寸的桌面浏览器iframe（无缩放），不是iPad真机；使用明确标注的内存演示数据，不覆盖真实学习记录。图集原图有金色背景，页面使用CSS圆形裁切。当前实现说明见[内容中心文档](../06-content-center.md)。

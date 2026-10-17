@@ -1,6 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const path=require('node:path');
 const vm=require('node:vm');
 const Core=require('../reward-core.js');
 const config=require('../content-config.js');
@@ -29,10 +30,10 @@ test('fifth completion commits hero, reset, lifetime receipts and pending feedba
  restored.feedback=[];assert.equal(award(restored,'english','v4').awarded,false);
  award(restored,'english','v5');assert.equal(restored.courses.english.roundCount,1);assert.equal(restored.courses.english.latest,'ultraman');
 });
-test('subsequent rounds retain heroes and follow configured order, including missing resources',()=>{
+test('subsequent rounds retain heroes and follow configured order, with course-specific artwork',()=>{
  const state=Core.empty();for(let i=0;i<11;i++)award(state,'english','v'+i);
  assert.deepEqual(state.courses.english.unlocked,['ultraman','hero-02']);
- const v=Core.view(state,config,'english');assert.equal(v.latest,'hero-02');assert.equal(v.nextHero,'hero-03');assert.equal(v.roundCount,1);assert.equal(v.hero.image,null);
+ const v=Core.view(state,config,'english');assert.equal(v.latest,'hero-02');assert.equal(v.nextHero,'hero-03');assert.equal(v.roundCount,1);assert.equal(v.heroImages[v.hero.id],'hero-06');
 });
 test('repeated callbacks, reopening and refreshed Baidu signatures award once',()=>{
  let state=Core.empty();
@@ -68,4 +69,21 @@ test('all new scripts parse and content center is in the offline asset list',()=
  for(const file of ['content-config.js','content-center.js','content-demo.js','reward-core.js','reward-store.js','course-player.js','profile.js'])new vm.Script(fs.readFileSync(file,'utf8'));
  assert.match(fs.readFileSync('sw.js','utf8'),/content-center.html/);
  assert(!fs.readFileSync('content-center.css','utf8').includes('transform:scale'));
+});
+
+test('course artwork uses all five supplied heroes without migrating saved rewards',()=>{
+ const atlas=require('../assets/content-center/hero-map.json');
+ const seen=new Set();
+ for(const c of config.courses){
+  assert.deepEqual(c.heroOrder,['ultraman','hero-02','hero-03']);
+  const state=Core.empty();for(let i=0;i<5;i++)award(state,c.id,c.id+'-'+i);
+  const serialized=JSON.stringify(state),v=Core.view(state,config,c.id);
+  const art=atlas.heroes.find(h=>h.id===v.heroImages[v.latest]);
+  assert.equal(art.subject,config.subjects[c.subject].label);seen.add(art.id);
+  assert.equal(JSON.stringify(state),serialized);assert.equal(v.roundCount,0);
+  for(const id of c.heroOrder)assert(atlas.heroes.some(h=>h.id===c.heroImages[id]));
+ }
+ assert.equal(seen.size,5);
+ const png=fs.readFileSync(path.join(__dirname,'../assets/content-center/hero-atlas.png'));
+ assert.equal(png.readUInt32BE(16),atlas.width);assert.equal(png.readUInt32BE(20),atlas.height);
 });

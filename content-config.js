@@ -8,10 +8,12 @@
       english: { label: '英', color: '#159fea' }, thinking: { label: '思', color: '#ff746a' },
       pinyin: { label: '拼', color: '#ffb72e' }, math: { label: '数', color: '#9964ec' }, reading: { label: '阅', color: '#e967a2' }
     },
+    heroAtlas: './assets/content-center/hero-map.json',
+    heroAssets: { lit: './assets/content-center/star-lit.svg', locked: './assets/content-center/star-locked.svg', check: './assets/content-center/check-unlocked.svg' },
     heroes: [
-      { id: 'ultraman', name: '奥特曼', art: 'avatar-ultraman', image: './assets/images/illustration-atlas.png' },
-      { id: 'hero-02', name: '第二位英雄', image: null, missing: '缺少第二位独立英雄徽章图片' },
-      { id: 'hero-03', name: '第三位英雄', image: null, missing: '缺少第三位独立英雄徽章图片' }
+      { id: 'ultraman', name: '课程英雄' },
+      { id: 'hero-02', name: '第二位英雄' },
+      { id: 'hero-03', name: '第三位英雄' }
     ],
     courses: [
       { id: 'english', name: '趣味英语', subject: 'english' },
@@ -19,7 +21,10 @@
       { id: 'pinyin', name: '快乐拼音', subject: 'pinyin' },
       { id: 'math', name: '数学启蒙', subject: 'math' },
       { id: 'reading', name: '趣味阅读', subject: 'reading' }
-    ].map(course => ({ ...course, entry: './report.html#watch=1&placeholder=1&course=' + course.id, heroOrder: ['ultraman', 'hero-02', 'hero-03'] })),
+    ].map((course, index) => ({ ...course,
+      // Preserve reward IDs and the three-round sequence; only map their artwork.
+      heroImages: { ultraman: 'hero-0' + (index + 1), 'hero-02': 'hero-06', 'hero-03': 'hero-0' + ((index + 1) % 5 + 1) },
+      entry: './report.html#watch=1&placeholder=1&course=' + course.id, heroOrder: ['ultraman', 'hero-02', 'hero-03'] })),
     copy: {
       first: '看完5个视频，合成英雄', remaining: '再看{n}个视频，点亮英雄',
       unlocked: '英雄已点亮，继续收集下一位', collecting: '再看{n}个视频，收集下一位',

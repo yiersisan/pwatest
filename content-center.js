@@ -3,31 +3,33 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 4 14 8-14 8Z"/></svg>';
-  const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
-  let state, config, records = [], demo = false, generation = 0, feedbackRunning = false;
+  let state, config, atlas, records = [], demo = false, generation = 0, feedbackRunning = false;
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   function SubjectTag(subject) {
     return `<span class="subject-tag" style="--subject:${esc(subject.color)}">${esc(subject.label)}</span>`;
   }
   function artwork(hero, className = '') {
     if (!hero?.image) return `<span class="hero-art asset-missing ${className}">${esc(hero?.name || '英雄')}<br>素材待补齐</span>`;
-    return `<span class="hero-art ${className}"><img style="left:${-(hero.column || 0)*100}%;top:${-(hero.row || 0)*100}%" src="${esc(hero.image)}" width="1774" height="887" alt="${esc(hero.name)}" decoding="async"></span>`;
+    return `<span class="hero-art ${className}"><img style="width:${(hero.columns || 4)*100}%;height:${(hero.rows || 2)*100}%;left:${-(hero.column || 0)*100}%;top:${-(hero.row || 0)*100}%" src="${esc(hero.image)}" width="1774" height="887" alt="${esc(hero.name)}" decoding="async"></span>`;
   }
   function HeroBadge(view, phase) {
     const unlocked = Boolean(view.latest) && phase !== 'collect';
-    return `<div class="hero-badge ${unlocked ? 'is-unlocked' : 'is-locked'}" aria-label="${esc(view.hero?.name || '英雄')}，${unlocked ? '已点亮' : '未点亮'}">${artwork(view.hero)}${unlocked ? `<span class="unlocked-label">${checkIcon}已点亮</span>` : ''}</div>`;
+    const artId = view.heroImages?.[view.hero?.id];
+    const asset = atlas.heroes.find(h => h.id === artId);
+    const hero = asset ? { ...asset, name: view.hero.name, image: atlas.image, columns: atlas.columns, rows: atlas.rows } : null;
+    return `<div class="hero-badge ${unlocked ? 'is-unlocked' : 'is-locked'}" aria-label="${esc(view.hero?.name || '英雄')}，${unlocked ? '已点亮' : '未点亮'}">${artwork(hero)}${unlocked ? `<img class="hero-check" src="${esc(config.heroAssets.check)}" alt="" width="64" height="64"><span class="unlocked-label">已点亮</span>` : ''}</div>`;
   }
   function EnergyProgress(count) {
-    return `<ol class="energy-progress" aria-label="已收集 ${count} 枚，共 5 枚">${Array.from({length:5},(_,i) => `<li class="${i < count ? 'is-collected' : 'is-empty'}"><img src="./assets/icons/energy-star.svg" width="34" height="34" alt="第${i+1}枚${i<count?'已收集':'未收集'}"></li>`).join('')}</ol>`;
+    return `<ol class="energy-progress" aria-label="已收集 ${count} 枚，共 5 枚">${Array.from({length:5},(_,i) => `<li class="${i < count ? 'is-collected' : 'is-empty'}"><img src="${esc(i < count ? config.heroAssets.lit : config.heroAssets.locked)}" width="72" height="72" alt="第${i+1}枚${i<count?'已收集':'未收集'}"><span class="star-index" aria-hidden="true">${i+1}</span></li>`).join('')}</ol>`;
   }
   function CourseRewardCard(view, phase) {
     const count = phase === 'collect' || phase === 'synthesis' ? 5 : view.roundCount;
     const newRound = view.latest && count === 0;
     return `<article class="course-card ${phase === 'synthesis' ? 'is-synthesizing' : ''}" data-course-card="${esc(view.id)}" aria-labelledby="course-${esc(view.id)}">
       <h2 class="course-title" id="course-${esc(view.id)}">${SubjectTag(config.subjects[view.subject])}<span class="course-title-text" title="${esc(view.name)}">${esc(view.name)}</span></h2>
-      ${HeroBadge(view,phase)}
+      <div class="course-rewards">${HeroBadge(view,phase)}<div class="progress-panel">
       <p class="reward-progress">${newRound ? '<small>新一轮</small>' : ''}<strong>${count}</strong> / 5</p>
-      ${EnergyProgress(count)}
+      ${EnergyProgress(count)}</div></div>
       <div class="course-actions"><p>${esc(view.encouragement)}</p><button type="button" class="learn-button" data-course="${esc(view.id)}" ${phase ? 'disabled' : ''}>${playIcon}${esc(view.button)}</button></div>
     </article>`;
   }
@@ -86,6 +88,12 @@
       if (!window.ContentConfig || !window.RewardCore || !window.RewardStore) throw Error('页面资源未完整加载，请联网重新加载。');
       demo = /^#demo(?:-|$)/.test(location.hash);
       config = structuredClone(ContentConfig);
+      const response = await fetch(config.heroAtlas);
+      if (!response.ok) throw Error('英雄资源配置加载失败，请联网重试。');
+      atlas = await response.json();
+      if (atlas.columns !== 3 || atlas.rows !== 2 || !Array.isArray(atlas.heroes)) throw Error('英雄资源配置不完整。');
+      atlas.image = new URL(atlas.file, new URL(config.heroAtlas, location.href)).href;
+      if (ticket !== generation) return;
       renderProfile(); $('reward-rule').textContent = config.copy.rule;
       $('demo-banner').hidden = !demo;
       if (demo) {
@@ -93,7 +101,7 @@
         const scenario = location.hash.slice(6);
         if (scenario === 'empty') config.courses = [];
         if (scenario === 'long') config.courses[0].name = '趣味英语与勇敢小伙伴一起探索奇妙世界的超长课程标题示例';
-        if (scenario === 'images') config.heroes[0].image = './assets/images/missing-hero-demo.png';
+        if (scenario === 'images') atlas.image = './assets/images/missing-hero-demo.png';
         if (scenario === 'error') throw Error('演示：课程加载失败。真实学习记录未被修改。');
         if (scenario === 'five') {
           for (let i=0;i<2;i++) { const videoId='demo-five-'+i; RewardCore.bind(state,config,'english',videoId); RewardCore.complete(state,config,{valid:true,videoId,at:Date.now()}); }
