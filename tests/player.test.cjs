@@ -43,6 +43,7 @@ class Element extends EventTarget {
   removeAttribute(key) { delete this.attrs[key]; if (key === 'src') this.src = ''; }
   scrollIntoView() {}
   focus() {}
+  click() { this.fire('click'); }
   fire(type) { this.dispatchEvent(new Event(type, { cancelable: true })); }
 }
 class Video extends Element {
@@ -59,12 +60,18 @@ function app(initial = null, storageBlocked = false, coursePlayer = null, watchP
   const doc = new EventTarget(); doc.getElementById = id => els[id]; doc.createElement = tag => new Element(tag);
   const win = new EventTarget(); win.PlayerCore = Core; win.DefaultVideo = { url: 'https://example.com/pwatest/assets/video/default.m3u8', title: '百度完整视频（8分57秒）' }; win.CoursePlayer = coursePlayer; win.WatchPlayer = watchPlayer;
   const store = new Map(initial ? [[Core.STORAGE_KEY, initial]] : []);
+  const revoked = [];
+  let nextBlob = 0;
+  class LocalURL extends URL {
+    static createObjectURL() { return 'blob:https://example.com/local-' + (++nextBlob); }
+    static revokeObjectURL(url) { revoked.push(url); }
+  }
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8'), {
-    window: win, document: doc, navigator: { onLine: true }, URL, Date, Event, CustomEvent,
+    window: win, document: doc, navigator: { onLine: true }, URL: LocalURL, Date, Event, CustomEvent,
     localStorage: { getItem: key => { if (storageBlocked) throw Error('blocked'); return store.get(key); }, setItem: (key, value) => { if (storageBlocked) throw Error('blocked'); store.set(key, value); } },
     setTimeout: () => 1, clearTimeout() {}
   });
-  return { els, win, store, saved: () => JSON.parse(store.get(Core.STORAGE_KEY) || '[]') };
+  return { els, win, store, revoked, saved: () => JSON.parse(store.get(Core.STORAGE_KEY) || '[]') };
 }
 test('default import, pause saving, reopening, resume, restart, and deletion', () => {
   const first = app();
@@ -212,4 +219,57 @@ test('course items exit replacement mode, save separate progress and resume afte
   assert.equal(reopened.els.video.currentTime,123);
   assert.equal(reopened.saved().find(r=>r.title===second.title).position,45);
   assert.equal(reopened.saved().length,2);
+});
+
+function chooseLocal(instance, file = { name: 'english-s1-w1-1.mp4', type: 'video/mp4', size: 1024 }) {
+  instance.els['local-video-file'].files = file ? [file] : [];
+  instance.els['local-video-file'].fire('change');
+}
+test('local playback preserves link progress, never persists blob URLs or awards rewards', () => {
+  const completions = [], imports = [];
+  const instance = app(null, false, { launch(){}, imported(r){imports.push(r.id);}, completed(r){completions.push(r.id);} });
+  instance.els['import-form'].fire('submit');
+  instance.els.video.metadata(); instance.els.video.currentTime = 37;
+  chooseLocal(instance);
+  assert.match(instance.els.video.src, /^blob:/);
+  assert.equal(instance.els.video.plays, 2);
+  assert.equal(instance.saved().length, 1);
+  assert.equal(instance.saved()[0].position, 37);
+  assert.equal(instance.els['direct-video'].hidden, true);
+  instance.els.video.metadata(); instance.els.video.ended = true; instance.els.video.fire('ended');
+  assert.equal(completions.length, 0); assert.equal(imports.length, 1);
+  assert.equal(instance.saved()[0].position, 37);
+  assert(!JSON.stringify(instance.saved()).includes('blob:'));
+});
+test('local selection cancel and invalid files leave current playback intact', () => {
+  const instance = app(); chooseLocal(instance);
+  const src = instance.els.video.src;
+  chooseLocal(instance, null);
+  chooseLocal(instance, { name: 'list.m3u8', type: '', size: 123 });
+  chooseLocal(instance, { name: 'empty.mp4', type: 'video/mp4', size: 0 });
+  assert.equal(instance.els.video.src, src); assert.equal(instance.els.video.plays, 1);
+  assert.equal(instance.revoked.length, 0);
+  assert.match(instance.els['local-video-status'].textContent, /非空/);
+});
+test('replacing a local file releases old URL; restart and bfcache retain it', () => {
+  const instance = app(); chooseLocal(instance);
+  const first = instance.els.video.src;
+  instance.els.restart.fire('click'); assert.equal(instance.revoked.length, 0);
+  chooseLocal(instance); assert.deepEqual(instance.revoked, [first]);
+  const second = instance.els.video.src;
+  const cached = new Event('pagehide'); cached.persisted = true;
+  instance.win.dispatchEvent(cached); assert.deepEqual(instance.revoked, [first]);
+  instance.els['import-form'].fire('submit');
+  assert.deepEqual(instance.revoked, [first, second]);
+  chooseLocal(instance); const last = instance.els.video.src;
+  instance.win.dispatchEvent(new Event('pagehide'));
+  assert.deepEqual(instance.revoked, [first, second, last]);
+});
+test('local files report format failures and offline playback without expired-link guidance', () => {
+  const instance = app(); chooseLocal(instance);
+  instance.win.dispatchEvent(new Event('offline'));
+  assert.match(instance.els['player-status'].textContent, /本地视频可继续/);
+  instance.els.video.error = { code: 4 }; instance.els.video.fire('error');
+  assert.match(instance.els['player-status'].textContent, /编码不受/);
+  assert.doesNotMatch(instance.els['player-status'].textContent, /链接可能过期/);
 });

@@ -1,5 +1,7 @@
 # 首页浏览器验证截图
 
+`local-video-upload.png`：v3.6 定制页本地文件播放测试截图，真实文件选择器选择生成的 12 秒 MP4，浏览器解码并播放完毕；不是 iPad 真机截图。见[播放器说明](../01-player-and-progress.md#v36-本地视频测试)。
+
 2026-10-17，本机浏览器渲染。`home-1024.png`、`home-1180.png`、`home-1194.png`、`home-1366.png`、`home-768.png`、`home-507.png` 为视口检查工具中的可见截图：iframe 使用对应 CSS 宽高，外层浏览器面板较窄，所以截图并未完整包含被测页面。不能当作对应 iPad 的完整截图或真机验收。
 
 `home-preview.png` 为当前本机首页可见预览。完整指标及待真机项见[学习首页实现与验收](../05-learning-home.md)。

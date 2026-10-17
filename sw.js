@@ -1,6 +1,6 @@
 // 一个 scope、一套版本化资源；完整安装后等待用户选择更新。
 const CACHE_PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = `${CACHE_PREFIX}v20-content-horizontal-2`;
+const CACHE = `${CACHE_PREFIX}v21-local-video-test`;
 // User-imported manifests survive application updates. This is not a media proxy.
 const IMPORT_CACHE = `pwatest-imports-${self.registration.scope}-v1`;
 const IMPORT_PREFIX = new URL('__local_hls__/', self.registration.scope).href;

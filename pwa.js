@@ -7,7 +7,7 @@
   let registration, reloadRequested = false;
   const message = text => { if (status) status.textContent = text; };
   if (!('serviceWorker' in navigator) || !window.isSecureContext) {
-    message('离线功能需要 HTTPS 或 localhost。视频仍需联网。'); return;
+    message('离线功能需要 HTTPS 或 localhost。链接视频仍需联网。'); return;
   }
   function showUpdate() { if (banner) banner.hidden = false; }
   if (apply) apply.addEventListener('click', () => {
@@ -32,6 +32,6 @@
     });
     return navigator.serviceWorker.ready;
   }).then(() => {
-    message('离线首页已准备好 · 视频仍需联网');
+    message('离线首页已准备好 · 链接视频仍需联网');
   }).catch(() => message('离线准备未完成，请联网后重新加载。'));
 })();

@@ -6,7 +6,7 @@
 - 内容中心：`content-center.html`，展示已保存的课程奖励；学习按钮暂直达全屏占位播放；实现与验收见 [内容中心文档](docs/06-content-center.md)。
 - 定制：`report.html`，真实视频导入、播放记录与断点续播；原来的存储键和播放方式保留。
 - 首页课程、资料、点评与周末活动均为明确标注的演示，不接入真实课程后台。
-- 当前首页 v4.2.0、内容中心 v4.3.0，播放器逻辑 v3.5，Service Worker 缓存 v20-content-horizontal-2。
+- 当前首页 v4.2.0、内容中心 v4.3.0，播放器逻辑 v3.6，Service Worker 缓存 v21-local-video-test。定制页新增本地视频播放测试，见[实现说明](docs/01-player-and-progress.md#v36-本地视频测试)。
 
 ## 实现文档
 

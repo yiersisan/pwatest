@@ -8,7 +8,8 @@
   const video = $('video');
   let records = [], current = null, editId = null, pendingResume = null, mediaReady = false;
   let playGeneration = 0, lastSavedAt = 0, loadTimer;
-  function sourceName(item) { return item.url.includes('/__local_hls__/') ? '本机导入清单' : new URL(item.url).hostname; }
+  let localObjectURL = null;
+  function sourceName(item) { return item.localFile ? '本地视频 · 临时测试' : item.url.includes('/__local_hls__/') ? '本机导入清单' : new URL(item.url).hostname; }
   function storageWarning() {
     $('storage-status').hidden = false;
     $('storage-status').textContent = '无法读取或保存本机记录。当前仍可播放，但关闭后可能无法恢复进度。请检查浏览器的存储设置。';
@@ -22,7 +23,7 @@
     const code = video.error?.code || 0;
     const detail = String(video.error?.message || '').replace(/https?:\/\/[^\s"<>]+/g, '[媒体地址]').slice(0, 300);
     $('playback-diagnostics').textContent = [
-      '页面脚本版本：v3.5',
+      '页面脚本版本：v3.6',
       '原生 HLS 支持：' + (video.canPlayType('application/vnd.apple.mpegurl') || '未声明支持'),
       '错误代码：' + (code ? code + '（' + (codes[code] || '未知错误') + '）' : '无'),
       '错误详情：' + (detail || '浏览器未提供'),
@@ -102,21 +103,26 @@
   }
   function select(item, autoplay, fromStart = false) {
     saveProgress(); video.pause();
+    if (localObjectURL && localObjectURL !== item.url) {
+      URL.revokeObjectURL(localObjectURL); localObjectURL = null;
+    }
+    if (item.localFile) localObjectURL = item.url;
     current = item; ++playGeneration; mediaReady = false;
     window.dispatchEvent(new CustomEvent('pwatest:source-selected', { detail: { url: item.url } }));
     if (fromStart) { item.position = 0; item.completed = false; }
     pendingResume = item.completed ? 0 : item.position;
-    item.updatedAt = Date.now(); records = [item, ...records.filter(record => record.id !== item.id)]; persist();
+    item.updatedAt = Date.now();
+    if (!item.localFile) { records = [item, ...records.filter(record => record.id !== item.id)]; persist(); }
     $('current-title').textContent = item.title; $('current-source').textContent = sourceName(item);
     $('empty-player').hidden = true; video.hidden = false; $('restart').disabled = false;
-    $('direct-video').href = item.url; $('direct-video').hidden = false;
+    $('direct-video').href = item.url; $('direct-video').hidden = !!item.localFile;
     status(pendingResume > 0 ? '正在加载，将从 ' + Core.time(pendingResume) + ' 继续…' : '正在加载视频…');
     // 交给 Safari 原生 HLS 播放器，不设置 crossorigin，也不通过 fetch 读取清单。
     video.src = item.url; video.load();
     updateDiagnostics();
     clearTimeout(loadTimer);
     loadTimer = setTimeout(() => {
-      if (!mediaReady) status('加载时间较长。链接可能已失效或需要网盘登录，请重试或替换链接。');
+      if (!mediaReady) status(current?.localFile ? '本地视频读取较慢。如果文件在 iCloud 中，请先下载到本机后重新选择；也请确认视频编码受支持。' : '加载时间较长。链接可能已失效或需要网盘登录，请重试或替换链接。');
     }, 15000);
     if (autoplay) play(); // 直接在点击事件中调用，保留 iPad 用户手势。
     renderHistory();
@@ -145,7 +151,7 @@
   video.addEventListener('seeked', () => { restoreProgress(); saveProgress(); renderHistory(); });
   video.addEventListener('playing', () => {
     clearTimeout(loadTimer); restoreProgress();
-    if (pendingResume === null) status('正在播放 · 进度自动保存');
+    if (pendingResume === null) status(current?.localFile ? '正在播放本地视频 · 仅本次测试，刷新后需重新选择' : '正在播放 · 进度自动保存');
   });
   video.addEventListener('waiting', () => { if (current && !video.error) status('正在缓冲，请稍候…'); });
   video.addEventListener('timeupdate', () => {
@@ -156,12 +162,13 @@
   video.addEventListener('ended', () => {
     const completedRecord = current && mediaReady && video.ended && video.currentSrc === current.url ? { id: current.id } : null;
     pendingResume = null; saveProgress(); renderHistory(); status('播放完毕，可点击「从头播放」再看一次。');
-    if (completedRecord) window.CoursePlayer?.completed(completedRecord);
+    if (completedRecord && !current.localFile) window.CoursePlayer?.completed(completedRecord);
   });
   function showMediaError() {
     if (!current) return;
     clearTimeout(loadTimer);
-    if (!navigator.onLine) status('当前处于离线状态。此视频尚未下载，请联网后重新播放。');
+    if (current.localFile) status('本地视频未能播放：文件可能损坏、尚未下载到本机，或视频编码不受此浏览器支持。请尝试 H.264 / AAC 编码的 MP4 文件。');
+    else if (!navigator.onLine) status('当前处于离线状态。此视频尚未下载，请联网后重新播放。');
     else if (current.url.includes('/__local_hls__/')) status('清单或视频分片未能加载：本机清单可能已被清除，或分片链接已过期、需要登录。请重新导入有效清单；保存清单不等于保存了视频。');
     else if (/M3U8|\.m3u8/i.test(current.url) && !video.canPlayType('application/vnd.apple.mpegurl')) status('当前浏览器不支持原生 HLS，请在 iPad Safari 中打开。');
     else if (window.WatchPlayer?.placeholder) status('占位视频未能加载：链接可能过期、需要网盘登录或不允许外站播放。请确认链接仍可用后重试。');
@@ -175,6 +182,23 @@
     editId = null; $('cancel-edit').hidden = true; $('import-button').textContent = '导入视频'; message('');
   }
   $('cancel-edit').addEventListener('click', resetForm);
+  $('upload-local-video').addEventListener('click', () => $('local-video-file').click());
+  $('local-video-file').addEventListener('change', () => {
+    const file = $('local-video-file').files?.[0];
+    $('local-video-file').value = ''; // Allow choosing the same file again after a failure.
+    if (!file) return; // Cancelling must leave the current playback untouched.
+    if (!file.size || !(file.type.startsWith('video/') || /\.(mp4|m4v|mov|webm)$/i.test(file.name))) {
+      $('local-video-status').textContent = '请选择非空的视频文件，例如 MP4；M3U8 清单请使用现有课程入口。';
+      return;
+    }
+    let url;
+    try { url = URL.createObjectURL(file); }
+    catch { $('local-video-status').textContent = '无法读取这个文件，请先将视频下载到本机，再重新选择。'; return; }
+    resetForm();
+    select({ id: url, url, title: file.name, localFile: true, position: 0, duration: 0, completed: false }, true);
+    $('local-video-status').textContent = '已选择「' + file.name + '」。仅在当前页面播放，不上传、不保存副本；若未自动播放，请点击播放器。';
+    video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
   $('use-default').addEventListener('click', () => {
     resetForm(); $('video-url').value = DEFAULT_URL; $('video-title').value = window.DefaultVideo.title;
     message('已选默认完整清单（08:57），点击「导入视频」开始播放。');
@@ -205,8 +229,12 @@
   });
   function networkStatus() { $('network-status').textContent = navigator.onLine ? '在线播放' : '当前离线'; }
   window.addEventListener('online', networkStatus);
-  window.addEventListener('offline', () => { networkStatus(); if (current) status('网络已断开，后续播放需要联网。'); });
+  window.addEventListener('offline', () => { networkStatus(); if (current) status(current.localFile ? '当前离线 · 已选的本地视频可继续播放。' : '网络已断开，后续播放需要联网。'); });
   window.addEventListener('pagehide', saveProgress);
+  window.addEventListener('pagehide', event => {
+    // Keep the URL alive when Safari stores the page in its back/forward cache.
+    if (!event.persisted && localObjectURL) { URL.revokeObjectURL(localObjectURL); localObjectURL = null; }
+  });
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
   $('video-url').value = DEFAULT_URL;
   $('video-title').value = window.DefaultVideo.title;

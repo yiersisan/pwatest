@@ -57,6 +57,12 @@
     <div class="columns">
       <section class="panel" aria-labelledby="import-title">
         <div class="section-heading"><h2 id="import-title">导入视频</h2><button id="use-default" class="text-button" type="button">使用默认完整清单</button></div>
+        <div class="local-video-import">
+          <button id="upload-local-video" class="primary" type="button" aria-describedby="local-video-help">上传本地视频（测试）</button>
+          <input id="local-video-file" type="file" accept="video/*,.mp4,.m4v,.mov,.webm" hidden>
+          <p id="local-video-help" class="hint">从本机选择视频，直接在上方播放器测试。文件不会上传服务器，不计课程奖励；刷新后需重新选择。推荐 MP4（H.264 / AAC）。</p>
+          <p id="local-video-status" class="hint" role="status" aria-live="polite"></p>
+        </div>
         <form id="import-form">
           <label for="video-title">视频名称 <span>选填</span></label>
           <input id="video-title" maxlength="100" placeholder="给这段视频起个名字" autocomplete="off">
@@ -80,7 +86,7 @@
         <ul id="history-list" class="history-list"></ul>
       </section>
     </div>
-    <footer class="page-footer"><p>视频需联网播放。导入清单不会下载视频内容；链接失效后可替换链接或更新课程清单。</p><p id="offline-status" role="status">播放记录和导入清单仅保存在当前浏览器或主屏幕 App 中。</p><span class="version">v3.5 · 课程点播</span></footer>
+    <footer class="page-footer"><p>链接视频需联网播放。导入清单不会下载视频内容；本地视频测试仅在当前页面有效。</p><p id="offline-status" role="status">播放记录和导入清单仅保存在当前浏览器或主屏幕 App 中。</p><span class="version">v3.6 · 本地视频测试</span></footer>
     <div class="report-update" id="pwa-update" role="status" hidden><span>新版本已准备好</span> <button class="quiet" id="pwa-apply" type="button">保存进度并更新</button></div>
   </main>
 </body>
