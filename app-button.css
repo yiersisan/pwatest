@@ -1,0 +1,154 @@
+:root {
+  --button-min-height: 52px;
+  --button-radius: 999px;
+  --button-padding: 12px 24px;
+  --button-font-size: 18px;
+  --button-line-height: 24px;
+  --button-primary-background: linear-gradient(
+    180deg,
+    #22c875 0%,
+    #0aaf62 100%
+  );
+}
+/* Root scope also wins over the page-level native button resets. Page classes
+   control placement only; all variants share these dimensions and typography. */
+:root .app-button {
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--button-min-height);
+  min-width: 112px;
+  max-width: 100%;
+  padding: var(--button-padding);
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  font-family: var(--font);
+  font-size: var(--button-font-size);
+  font-weight: 600;
+  line-height: var(--button-line-height);
+  white-space: normal;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  isolation: isolate;
+}
+:root .app-button--primary {
+  background: var(--button-primary-background);
+  color: #fff;
+  box-shadow: 0 2px 3px #057a4420;
+}
+:root .app-button--secondary {
+  background: #fff;
+  color: #16734d;
+  border-color: #cae8d9;
+  box-shadow: none;
+}
+:root .app-button--danger {
+  background: #fff1f0;
+  color: #b73232;
+  border-color: #f1c7c3;
+  box-shadow: none;
+}
+:root .app-button--block {
+  width: 100%;
+}
+:root .app-button__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+}
+:root .app-button__label {
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+:root .app-button .icon {
+  position: static;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  color: inherit;
+  pointer-events: none;
+}
+:root .app-button:focus-visible {
+  outline: 3px solid #075a3a;
+  outline-offset: 4px;
+}
+:root .app-button:not(:disabled):not([aria-disabled="true"]):hover {
+  filter: brightness(0.97);
+}
+:root .app-button:disabled,
+:root .app-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: default;
+}
+/* The label and leading icon stay in the flow while the spinner overlays them,
+   so loading never replaces the text or changes the button's natural width. */
+:root .app-button[aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.8;
+}
+:root .app-button[aria-busy="true"] .app-button__content {
+  opacity: 0;
+}
+:root .app-button[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: app-button-spin 0.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes app-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .app-button[aria-busy="true"]::after {
+    animation: none;
+  }
+}
+
+/* Shared return control for child, parent and player views. */
+:root .app-back {
+  box-sizing: border-box;
+  padding: 0;
+  width: 60px;
+  height: 60px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 60px;
+  background: #fff;
+  border: 1px solid #d7ede1;
+  border-radius: 50%;
+  color: #073f2f;
+  box-shadow: 0 2px 4px #073f2f0a;
+}
+:root .app-back .icon {
+  width: 30px;
+  height: 30px;
+}
+:root .app-back:focus-visible {
+  outline: 3px solid #07583d;
+  outline-offset: 4px;
+}
+@media (max-width: 850px) {
+  :root .app-back {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+}

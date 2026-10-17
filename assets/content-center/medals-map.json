@@ -1,0 +1,49 @@
+{
+  "file": "medals-atlas.png",
+  "width": 1983,
+  "height": 793,
+  "columns": 5,
+  "rows": 2,
+  "backgroundSize": "500% 200%",
+  "rowsMeaning": [
+    "lit",
+    "locked"
+  ],
+  "medals": [
+    {
+      "id": "star",
+      "label": "星章",
+      "column": 0,
+      "litPosition": "0% 0%",
+      "lockedPosition": "0% 100%"
+    },
+    {
+      "id": "shield",
+      "label": "盾章",
+      "column": 1,
+      "litPosition": "25% 0%",
+      "lockedPosition": "25% 100%"
+    },
+    {
+      "id": "wings",
+      "label": "翼章",
+      "column": 2,
+      "litPosition": "50% 0%",
+      "lockedPosition": "50% 100%"
+    },
+    {
+      "id": "gem",
+      "label": "宝石章",
+      "column": 3,
+      "litPosition": "75% 0%",
+      "lockedPosition": "75% 100%"
+    },
+    {
+      "id": "crown",
+      "label": "皇冠章",
+      "column": 4,
+      "litPosition": "100% 0%",
+      "lockedPosition": "100% 100%"
+    }
+  ]
+}

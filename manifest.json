@@ -1,7 +1,7 @@
 {
   "name": "小小学习岛",
   "short_name": "学习岛",
-  "description": "幼儿学习首页与视频链接播放器",
+  "description": "本机课程、视频学习与学习记录",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
