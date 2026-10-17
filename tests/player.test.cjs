@@ -195,3 +195,21 @@ test('watch player invokes muted fallback after an audible autoplay policy rejec
  assert.equal(retries,1);
  assert.doesNotMatch(instance.els['player-status'].textContent,/请点播放器/);
 });
+
+test('course items exit replacement mode, save separate progress and resume after reopening', () => {
+  const instance=app();
+  const first={url:'https://example.com/__local_hls__/'+'a'.repeat(64)+'/playlist.m3u8',title:'s1-w1-1',playlistDuration:537,selectItem:true};
+  const second={url:'https://example.com/__local_hls__/'+'b'.repeat(64)+'/playlist.m3u8',title:'s1-w1-2',playlistDuration:561,selectItem:true};
+  const choose=(target,detail)=>target.win.dispatchEvent(new CustomEvent('pwatest:import-source',{detail:{...detail}}));
+  choose(instance,first); instance.els.video.metadata(537); instance.els.video.currentTime=123;
+  instance.els['history-list'].children[0].children[3].children[1].fire('click');
+  choose(instance,second);
+  assert.equal(instance.saved().length,2);
+  assert.equal(instance.saved().find(r=>r.title===first.title).position,123);
+  instance.els.video.metadata(561); instance.els.video.currentTime=45; instance.els.video.pause();
+  const reopened=app(JSON.stringify(instance.saved()));
+  choose(reopened,first); reopened.els.video.metadata(537);
+  assert.equal(reopened.els.video.currentTime,123);
+  assert.equal(reopened.saved().find(r=>r.title===second.title).position,45);
+  assert.equal(reopened.saved().length,2);
+});

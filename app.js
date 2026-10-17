@@ -22,7 +22,7 @@
     const code = video.error?.code || 0;
     const detail = String(video.error?.message || '').replace(/https?:\/\/[^\s"<>]+/g, '[媒体地址]').slice(0, 300);
     $('playback-diagnostics').textContent = [
-      '页面脚本版本：v3.4',
+      '页面脚本版本：v3.5',
       '原生 HLS 支持：' + (video.canPlayType('application/vnd.apple.mpegurl') || '未声明支持'),
       '错误代码：' + (code ? code + '（' + (codes[code] || '未知错误') + '）' : '无'),
       '错误详情：' + (detail || '浏览器未提供'),
@@ -61,7 +61,7 @@
         window.dispatchEvent(new Event('pwatest:edit-source'));
         editId = item.id; $('video-title').value = item.title; $('video-url').value = item.url;
         $('import-button').textContent = '更新并播放'; $('cancel-edit').hidden = false;
-        message('可替换同一视频的链接，或选择新的清单文件；保留当前播放进度。');
+        message('可替换同一视频的链接，保留当前播放进度。点选课程项将切换视频，不会替换此记录。');
         $('import-form').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('video-url').focus();
       });
       action('删除记录', () => {
@@ -103,6 +103,7 @@
   function select(item, autoplay, fromStart = false) {
     saveProgress(); video.pause();
     current = item; ++playGeneration; mediaReady = false;
+    window.dispatchEvent(new CustomEvent('pwatest:source-selected', { detail: { url: item.url } }));
     if (fromStart) { item.position = 0; item.completed = false; }
     pendingResume = item.completed ? 0 : item.position;
     item.updatedAt = Date.now(); records = [item, ...records.filter(record => record.id !== item.id)]; persist();
@@ -198,6 +199,8 @@
     importSource($('video-url').value, $('video-title').value);
   });
   window.addEventListener('pwatest:import-source', event => {
+    // A course selection is never a replacement of the record being edited.
+    if (event.detail.selectItem) resetForm();
     event.detail.accepted = importSource(event.detail.url, event.detail.title, event.detail.playlistDuration);
   });
   function networkStatus() { $('network-status').textContent = navigator.onLine ? '在线播放' : '当前离线'; }

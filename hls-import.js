@@ -2,91 +2,51 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const Core = window.HlsImportCore;
-  const input = $('playlist-files'), choice = $('playlist-choice');
-  let candidates = [], reading = false, importing = false, generation = 0;
   const notice = text => { $('playlist-status').textContent = text; };
   const scope = new URL('./', location.href).href;
   const cacheName = 'pwatest-imports-' + scope + '-v1';
   const prefix = new URL('__local_hls__/', scope).href;
-  function selected() { return choice.value === '' ? null : candidates[Number(choice.value)]; }
-  function describe() {
-    const item = selected();
-    if (!item) return;
-    notice('这份清单列出 ' + window.PlayerCore.time(item.info.duration) + '、' + item.info.segments + ' 个分片。' +
-      (item.info.duration <= 100.5 ? '如果原视频有八九分钟，这份清单不完整，导入也只能播放这些内容。' : '清单时长不代表分片已经验证可播放。') +
-      ' 多份清单不会拼接；视频仍需联网。');
+  const prepared = new Map(), buttons = new Map();
+  let generation = 0, activeURL = '', loadingId = null;
+  function render() {
+    for (const [id, { button, meta, item }] of buttons) {
+      const selected = prepared.get(id)?.url === activeURL;
+      button.setAttribute('aria-pressed', String(selected));
+      button.setAttribute('aria-busy', String(loadingId === id));
+      meta.textContent = window.PlayerCore.time(item.duration) + ' · ' + (loadingId === id ? '正在准备…' : selected ? '已选择' : '点选播放');
+    }
   }
-  input.addEventListener('change', async () => {
+  function cancelPending() {
+    ++generation; loadingId = null; $('import-button').disabled = false; render();
+  }
+  function play(detail, selectItem) {
+    const request = { ...detail, selectItem };
+    window.dispatchEvent(new CustomEvent('pwatest:import-source', { detail: request }));
+    if (!request.accepted) throw new Error('清单已保存，但播放记录未导入，请查看表单提示。');
+    notice('已选择 ' + detail.title + '（' + window.PlayerCore.time(detail.playlistDuration) + '）。正在尝试播放；若未自动开始，请点播放器的播放按钮。视频分片仍需联网。');
+  }
+  async function load(item, selectItem) {
     const ticket = ++generation;
-    candidates = []; choice.replaceChildren(); $('playlist-options').hidden = true;
-    $('video-url').required = !input.files.length;
-    if (!input.files.length) { notice(''); reading = false; return; }
-    reading = true; notice('正在读取清单…');
+    loadingId = item.id; $('import-button').disabled = true; render();
+    notice('正在准备 ' + item.title + '…');
     try {
-      const files = Array.from(input.files);
-      if (files.length > 20 || files.reduce((n, f) => n + f.size, 0) > 4 * Core.MAX_BYTES) throw new Error('每次最多选择 20 份清单，总计不超过 4 MB。');
-      const results = await Promise.all(files.map(async file => {
-        try {
-          if (file.size > Core.MAX_BYTES) throw new Error('超过 1 MB');
-          const text = await file.text(), info = Core.inspect(text);
-          return { name: file.name, text, info };
-        } catch (error) { return { name: file.name, error: error.message }; }
-      }));
+      // Repeated selections use the same cached URL and preserve the click gesture.
+      const ready = selectItem && prepared.get(item.id);
+      if (ready) { play(ready, true); return; }
+      const response = await fetch(item.url || new URL(item.path, scope).href, { cache: 'no-store' });
       if (ticket !== generation) return;
-      candidates = results;
-      const blank = document.createElement('option'); blank.value = ''; blank.textContent = '请选择要导入的一份媒体清单'; choice.append(blank);
-      results.forEach((item, index) => {
-        const option = document.createElement('option'); option.value = String(index);
-        option.disabled = !!item.error || item.info.kind !== 'media' || !item.info.complete;
-        option.textContent = item.name + ' — ' + (item.error || (item.info.kind === 'master' ? '清晰度目录，请另选媒体清单' :
-          window.PlayerCore.time(item.info.duration) + ' · ' + item.info.segments + ' 个分片' + (item.info.complete ? '' : ' · 未结束，不能导入')));
-        choice.append(option);
-      });
-      choice.value = ''; $('playlist-options').hidden = false;
-      notice('请选择一份与目标视频时长相符的媒体清单。这里只读取本机文件，不会上传。');
-    } catch (error) { if (ticket === generation) notice(error.message); }
-    finally { if (ticket === generation) reading = false; }
-  });
-  choice.addEventListener('change', describe);
-  function clear() {
-    ++generation; reading = false; candidates = []; input.value = ''; choice.replaceChildren();
-    $('playlist-options').hidden = true; $('video-url').required = true; notice('');
-  }
-  $('clear-playlists').addEventListener('click', clear);
-  $('use-default').addEventListener('click', clear);
-  $('cancel-edit').addEventListener('click', clear);
-  window.addEventListener('pwatest:edit-source', clear);
-  // Capture the submit before app.js's normal link importer. Leave ordinary links unchanged.
-  $('import-form').addEventListener('submit', async event => {
-    const useDefault = !input.files.length && $('video-url').value.trim() === window.DefaultVideo?.url;
-    if (!input.files.length && !useDefault) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    if (reading || importing) { notice('请等待清单处理完成。'); return; }
-    let item = choice.value === '' ? null : selected();
-    if (!useDefault && (!item || item.error || item.info.kind !== 'media' || !item.info.complete)) { notice('请先选择一份有效、已结束的媒体清单。'); return; }
-    importing = true; $('import-button').disabled = true;
-    const ticket = generation;
-    try {
-      if (useDefault) {
-        notice('正在准备默认完整清单…');
-        const response = await fetch(window.DefaultVideo.url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('默认清单暂时无法读取，请稍后重试或选择本机清单。');
-        if (Number(response.headers.get('Content-Length')) > Core.MAX_BYTES) throw new Error('默认清单超过 1 MB。');
-        const text = await response.text();
-        const info = Core.inspect(text);
-        if (info.kind !== 'media' || !info.complete || Math.abs(info.duration - window.DefaultVideo.duration) > 0.1 || info.segments !== window.DefaultVideo.segments) {
-          throw new Error('默认清单与预期时长不符，请更新页面或重新选择清单。');
-        }
-        item = { name: window.DefaultVideo.title, text, info };
+      if (!response.ok) throw new Error('清单暂时无法读取，请联网后重试；已导入的视频可从播放记录打开。');
+      if (Number(response.headers.get('Content-Length')) > Core.MAX_BYTES) throw new Error('清单超过 1 MB。');
+      const text = await response.text();
+      const info = Core.inspect(text);
+      if (info.kind !== 'media' || !info.complete || Math.abs(info.duration - item.duration) > 0.1 || info.segments !== item.segments) {
+        throw new Error('清单与预期时长不符，请更新页面后重试。');
       }
+      const parsed = Core.normalize(text);
       if (ticket !== generation) return;
-      // The bundled manifest already contains absolute HTTPS media URLs.
-      // Do not use the HTTP localhost preview URL as a media base.
-      const parsed = Core.normalize(item.text, useDefault ? '' : $('playlist-base').value.trim());
-      if (!navigator.serviceWorker?.controller) throw new Error('本机清单播放尚未就绪，请等待离线准备完成后刷新，再重新选择清单。');
-      // Verify the active worker understands the route before writing any user data.
+      if (!navigator.serviceWorker?.controller) throw new Error('本机清单播放尚未就绪，请等待离线准备完成后刷新，再点选视频。');
       const probe = await fetch(prefix + 'capabilities', { cache: 'no-store' });
-      if (probe.headers.get('X-Pwatest-HLS') !== '1') throw new Error('请先点击页面的新版本更新按钮，更新后重新选择清单。');
+      if (probe.headers.get('X-Pwatest-HLS') !== '1') throw new Error('请先点击页面的新版本更新按钮，更新后重新点选视频。');
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(parsed.body));
       const hash = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
       const url = prefix + hash + '/playlist.m3u8';
@@ -100,19 +60,43 @@
       const verification = await fetch(url, { cache: 'no-store' });
       if (!verification.ok || await verification.text() !== parsed.body) throw new Error('浏览器没有正确返回已保存清单，请更新页面后重试。');
       if (ticket !== generation) return;
-      const detail = {
-        url, title: $('video-title').value.trim() || item.name.replace(/\.m3u8?$/i, ''),
-        playlistDuration: parsed.duration
-      };
-      window.dispatchEvent(new CustomEvent('pwatest:import-source', { detail }));
-      if (!detail.accepted) throw new Error('清单已保存，但播放记录未导入，请查看表单提示。');
-      notice('已保存所选清单（' + window.PlayerCore.time(parsed.duration) + '）。' +
-        (parsed.duration <= 100.5 ? '这份清单只有这些内容，不能补全八九分钟的视频。' : '请点击播放并拖到后半段验证画面和声音。') + ' 视频分片仍需联网。');
-    } catch (error) { notice(error.message || '清单保存失败，请检查本机存储空间。'); }
-    finally { importing = false; $('import-button').disabled = false; }
+      const detail = { url, title: item.title, playlistDuration: parsed.duration };
+      if (selectItem) prepared.set(item.id, detail);
+      play(detail, selectItem);
+    } catch (error) {
+      if (ticket === generation) notice(error.message || '清单保存失败，请检查本机存储空间。');
+    } finally {
+      if (ticket === generation) { loadingId = null; $('import-button').disabled = false; render(); }
+    }
+  }
+  for (const item of window.VideoItems || []) {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'video-item';
+    const title = document.createElement('strong'); title.textContent = item.title;
+    const meta = document.createElement('span');
+    button.append(title, meta); button.addEventListener('click', () => load(item, true));
+    buttons.set(item.id, { button, meta, item }); $('video-items').append(button);
+  }
+  render();
+  $('use-default').addEventListener('click', () => { cancelPending(); notice(''); });
+  $('cancel-edit').addEventListener('click', cancelPending);
+  window.addEventListener('pwatest:edit-source', cancelPending);
+  window.addEventListener('pwatest:source-selected', event => {
+    activeURL = event.detail.url; cancelPending();
+  });
+  // Ordinary URLs still use app.js; the bundled default uses the verified cache route.
+  $('import-form').addEventListener('submit', event => {
+    if ($('video-url').value.trim() !== window.DefaultVideo?.url) { cancelPending(); return; }
+    event.preventDefault(); event.stopImmediatePropagation();
+    load({ ...window.DefaultVideo, id: 'default', title: $('video-title').value.trim() || window.DefaultVideo.title }, false);
   }, true);
   window.addEventListener('pwatest:delete-source', event => {
     const url = event.detail?.url;
-    if (typeof url === 'string' && url.startsWith(prefix)) caches.open(cacheName).then(cache => cache.delete(url)).catch(() => {});
+    if (typeof url !== 'string' || !url.startsWith(prefix)) return;
+    cancelPending();
+    for (const [id, detail] of prepared) if (detail.url === url) prepared.delete(id);
+    if (activeURL === url) activeURL = '';
+    render();
+    // Queue deletion before another click can write this same manifest again.
+    caches.open(cacheName).then(cache => cache.delete(url)).catch(() => {});
   });
 })();

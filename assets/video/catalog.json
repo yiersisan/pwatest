@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "courses": [
+    {
+      "id": "english-s1",
+      "subject": "english",
+      "stage": "s1",
+      "name": "英语 S1",
+      "catalog": "english/s1/catalog.json"
+    }
+  ]
+}

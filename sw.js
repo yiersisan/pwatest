@@ -1,6 +1,6 @@
 // 一个 scope、一套版本化资源；完整安装后等待用户选择更新。
 const CACHE_PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = `${CACHE_PREFIX}v18-default-hls-1`;
+const CACHE = `${CACHE_PREFIX}v19-video-items-1`;
 // User-imported manifests survive application updates. This is not a media proxy.
 const IMPORT_CACHE = `pwatest-imports-${self.registration.scope}-v1`;
 const IMPORT_PREFIX = new URL('__local_hls__/', self.registration.scope).href;
@@ -8,7 +8,7 @@ const ASSETS = ['./interaction.css', './interaction.js', './watch-player.css', '
   './content-demo.js', './reward-core.js', './reward-store.js', './course-player.js', './profile.js', './assets/icons/energy-star.svg',
   './', './index.html', './report.html', './home.css', './home.js', './learning-core.js',
   './learning-data.json', './pwa.js', './app.js', './player-core.js', './styles.css', './manifest.json',
-  './default-video.js', './hls-core.js', './hls-import.js', './favicon.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+  './default-video.js', './video-items.js', './hls-core.js', './hls-import.js', './favicon.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './assets/asset-manifest.json', './assets/icons/sprite.svg', './assets/images/illustration-atlas.png'];
 const HOME = new URL('./index.html', self.registration.scope).href;
 const ROOT = new URL('./', self.registration.scope).href;

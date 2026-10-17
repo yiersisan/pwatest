@@ -18,6 +18,7 @@
   <script src="player-core.js" defer></script>
   <script src="default-video.js" defer></script>
   <script src="hls-core.js" defer></script>
+  <script src="video-items.js" defer></script>
   <script src="hls-import.js" defer></script>
   <script src="content-config.js" defer></script>
   <script src="reward-core.js" defer></script>
@@ -48,7 +49,7 @@
         <button id="watch-lock" class="watch-lock" type="button" aria-label="锁定播放操作" aria-pressed="false" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path class="open-shackle" d="M9 10V6a4 4 0 0 1 8 0"/><path class="locked-shackle" d="M8 10V6a4 4 0 0 1 8 0v4"/><path d="M12 14v3"/></svg>
         </button>
-        <div id="empty-player" class="empty-player"><span class="play-symbol" aria-hidden="true">▶</span><h3>完整清单已准备好</h3><p>默认视频 08:57，点击下方「导入视频」，无需选择文件。</p></div>
+        <div id="empty-player" class="empty-player"><span class="play-symbol" aria-hidden="true">▶</span><h3>完整清单已准备好</h3><p>在下方点选 s1-w1-1 或 s1-w1-2，即可开始播放。</p></div>
       </div>
       <div class="player-footer"><p id="player-status" role="status" aria-live="polite">支持 iPad Safari 原生播放 HLS / MP4。</p><button id="restart" class="quiet" type="button" disabled>从头播放</button></div>
       <details class="diagnostics"><summary>播放诊断</summary><p class="hint">播放失败后，可查看下面的诊断信息。直接打开可帮助判断是否只在嵌入播放器时失败。</p><pre id="playback-diagnostics"></pre><a id="direct-video" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>在新标签页直接打开视频</a></details>
@@ -62,20 +63,12 @@
           <label for="video-url">视频链接</label>
           <textarea id="video-url" rows="4" required spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="粘贴 HTTPS 视频链接" aria-describedby="import-help form-status"></textarea>
           <p class="hint" id="import-help">默认已选 08:57 完整清单。也可粘贴 HTTPS 视频直链；普通网盘分享页不能直接播放。</p>
-          <details class="playlist-import">
-            <summary>或导入 M3U8 清单文件</summary>
-            <p class="hint">从已登录且能完整播放的页面保存响应正文。可选择多份文件比较时长，再导入其中一份；不会把不同清晰度拼接。</p>
-            <label for="playlist-files">选择清单文件</label>
-            <input id="playlist-files" type="file" accept=".m3u8,.m3u,.txt,application/vnd.apple.mpegurl,application/x-mpegURL" multiple>
-            <div id="playlist-options" hidden>
-              <label for="playlist-choice">要播放的清单</label>
-              <select id="playlist-choice" aria-describedby="playlist-status"></select>
-              <label for="playlist-base">清单原始请求地址 <span>仅相对路径需要</span></label>
-              <textarea id="playlist-base" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="HTTPS 地址；不是网盘分享页面"></textarea>
-            </div>
-            <button id="clear-playlists" type="button" class="quiet">清除选择，使用视频链接</button>
-            <p class="hint">选择文件后，下方“导入视频”使用所选清单。清单仅保存在当前浏览器，视频仍需联网，临时分片地址也可能失效。</p>
-          </details>
+          <section class="playlist-items" aria-labelledby="playlist-items-title">
+            <h3 id="playlist-items-title">选择视频</h3>
+            <p class="hint">english / s1 / 第 1 周 · 点选后直接播放</p>
+            <div id="video-items" class="video-items" role="group" aria-label="第一周视频"></div>
+            <p class="hint">各视频分别保存播放进度。视频仍需联网，临时分片链接可能失效。</p>
+          </section>
           <p id="playlist-status" class="hint" role="status" aria-live="polite"></p>
           <p id="form-status" class="form-status" role="status" hidden></p>
           <div class="form-actions"><button id="import-button" class="primary" type="submit">导入视频</button><button id="cancel-edit" class="quiet" type="button" hidden>取消替换</button></div>
@@ -87,7 +80,7 @@
         <ul id="history-list" class="history-list"></ul>
       </section>
     </div>
-    <footer class="page-footer"><p>视频需联网播放。导入清单不会下载视频内容；链接失效后可替换链接或清单。</p><p id="offline-status" role="status">播放记录和导入清单仅保存在当前浏览器或主屏幕 App 中。</p><span class="version">v3.4 · 默认完整清单</span></footer>
+    <footer class="page-footer"><p>视频需联网播放。导入清单不会下载视频内容；链接失效后可替换链接或更新课程清单。</p><p id="offline-status" role="status">播放记录和导入清单仅保存在当前浏览器或主屏幕 App 中。</p><span class="version">v3.5 · 课程点播</span></footer>
     <div class="report-update" id="pwa-update" role="status" hidden><span>新版本已准备好</span> <button class="quiet" id="pwa-apply" type="button">保存进度并更新</button></div>
   </main>
 </body>
