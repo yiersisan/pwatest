@@ -146,3 +146,11 @@ test('manifest, page scripts and icon sizes are valid', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   for (const [, script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script);
 });
+
+test('parent static pages retain offline shells with course/demo queries; API queries are not cached', async () => {
+  const app = setup(); await app.lifecycle('install'); app.setNetwork(false);
+  for (const file of ['parent-courses.html?demo=1&course=english', 'parent-upload.html?course=english', 'parent-home.html?demo=1', 'parent-service.js', 'parent-view.js', 'assets/parent/icons/sprite.svg']) {
+    assert.equal(await (await app.fetch(scope + file)).text(), 'original', file);
+  }
+  assert.equal(app.fetch(scope + 'api/parent/session?course=english'), undefined);
+});

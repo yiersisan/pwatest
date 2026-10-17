@@ -2,7 +2,7 @@
 <html lang="zh-CN" class="learning-page">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#12AD65">
   <meta name="color-scheme" content="light">
@@ -17,11 +17,11 @@
   <link rel="stylesheet" href="./home.css">
   <script src="./learning-core.js" defer></script>
   <script src="./profile.js" defer></script>
-  <script src="./home.js" defer></script>
+  <script src="./parent-view.js" defer></script><script src="./parent-public.js" defer></script><script src="./home.js" defer></script><link rel="stylesheet" href="./parent-public.css">
   <script src="./pwa.js" defer></script>
   <link rel="stylesheet" href="./interaction.css">
   <script src="./interaction.js" defer></script>
-</head>
+<link rel="stylesheet" href="./parent-gate.css"><script src="./parent-backend.js" defer></script><script src="./parent-service.js" defer></script><script src="./parent-gate.js" defer></script></head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden"><symbol id="arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4m7-7-7 7 7 7"/></symbol><symbol id="book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-3-3-7-3-9-2v15c3-1 6 0 9 2 3-2 6-3 9-2V4c-2-1-6-1-9 2Z"/><path d="M12 6v15"/></symbol><symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></symbol><symbol id="chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol><symbol id="clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol><symbol id="close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></symbol><symbol id="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol><symbol id="play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 11 7-11 7Z" fill="currentColor" stroke-linejoin="round"/></symbol><symbol id="report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11M12 20V4M19 20V8" stroke-width="4"/></symbol><symbol id="retry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/></symbol><symbol id="sprout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9C5 13 2 9 3 4c5-1 9 2 9 8 0-6 4-9 9-8 1 5-2 9-9 8"/></symbol><symbol id="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9Z"/></symbol><symbol id="volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M17 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol></svg>
   <div class="learning-home">
@@ -32,7 +32,7 @@
       </button>
       <nav class="home-nav" aria-label="功能入口">
         <a href="./content-center.html" id="open-content-center"><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#book"></use></svg></span>内容中心</a>
-        <a href="./report.html"><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#report"></use></svg></span>定制</a>
+        <a href="./parent-courses.html" data-parent-gate><span class="bubble"><svg class="icon" aria-hidden="true"><use href="#report"></use></svg></span>定制</a>
       </nav>
     </header>
     <p class="orientation-hint">横过来，一起探索学习岛。分屏时也可以继续浏览。</p>

@@ -2,7 +2,7 @@
 <html lang="zh-CN" class="content-page">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#12AD65">
   <meta name="referrer" content="no-referrer">
   <meta name="color-scheme" content="light">
@@ -25,7 +25,7 @@
   <script src="./pwa.js" defer></script>
   <link rel="stylesheet" href="./interaction.css">
   <script src="./interaction.js" defer></script>
-</head>
+<link rel="stylesheet" href="./parent-gate.css"><script src="./parent-backend.js" defer></script><script src="./parent-service.js" defer></script><script src="./parent-gate.js" defer></script></head>
 <body>
   <div class="content-center">
     <header class="center-header">
@@ -33,7 +33,7 @@
         <a class="back-button" id="center-back" href="./index.html" aria-label="返回学习首页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></a>
         <div><h1>内容中心</h1><p>看视频，点亮你的英雄</p></div>
       </div>
-      <div class="center-profile" id="center-profile"></div>
+      <button class="parent-entry" data-parent-gate type="button"><svg aria-hidden="true"><use href="./assets/parent/icons/sprite.svg#lock"/></svg>定制</button><div class="center-profile" id="center-profile"></div>
     </header>
     <p class="reward-rule"><img src="./assets/icons/energy-star.svg" alt="" width="28" height="28"><span id="reward-rule">看完1个视频 → 点亮1枚能量徽章 · 集齐5枚 → 合成英雄</span></p>
     <div class="demo-banner" id="demo-banner" hidden><strong>视觉演示 · 不记录学习奖励</strong><span>以下为设计示例状态，学习按钮打开占位视频。</span><a href="./content-center.html">返回我的内容中心</a></div>

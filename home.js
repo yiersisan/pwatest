@@ -60,6 +60,7 @@
       try { completed = Core.completedFrom(localStorage.getItem(Core.STORAGE_KEY), data); }
       catch { completed = Core.completedFrom(null, data); $('demo-storage').hidden = false; }
       render(); restoreHomePosition();
+      await window.ParentHome?.mount();
     } catch {
       if (generation !== loadGeneration) return;
       $('learning-error').hidden = false;

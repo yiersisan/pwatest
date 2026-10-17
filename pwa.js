@@ -12,7 +12,8 @@
   function showUpdate() { if (banner) banner.hidden = false; }
   if (apply) apply.addEventListener('click', () => {
     if (!registration?.waiting) return;
-    window.dispatchEvent(new Event('pwatest:before-update'));
+    const event = new Event('pwatest:before-update', { cancelable: true });
+    if (!window.dispatchEvent(event)) return;
     reloadRequested = true; apply.disabled = true;
     registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
   });

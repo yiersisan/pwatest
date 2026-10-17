@@ -1,10 +1,10 @@
 // 一个 scope、一套版本化资源；完整安装后等待用户选择更新。
 const CACHE_PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = `${CACHE_PREFIX}v21-local-video-test`;
+const CACHE = `${CACHE_PREFIX}v24-parent-customization`;
 // User-imported manifests survive application updates. This is not a media proxy.
 const IMPORT_CACHE = `pwatest-imports-${self.registration.scope}-v1`;
 const IMPORT_PREFIX = new URL('__local_hls__/', self.registration.scope).href;
-const ASSETS = ['./assets/content-center/hero-map.json', './assets/content-center/hero-atlas.png',
+const ASSETS = ["./parent-playback.js","./parent-courses.html","./parent-upload.html","./parent-home.html","./parent.css","./parent-gate.css","./parent-gate.js","./parent-core.js","./parent-backend.js","./parent-service.js","./parent-app.js","./parent-view.js","./parent-public.js","./parent-public.css","./assets/parent/icons/sprite.svg","./assets/parent/images/header-landscape.svg","./assets/parent/images/learning-atlas.png",'./assets/content-center/hero-map.json', './assets/content-center/hero-atlas.png',
   './assets/content-center/star-lit.svg', './assets/content-center/star-locked.svg', './assets/content-center/check-unlocked.svg', './interaction.css', './interaction.js', './watch-player.css', './watch-player.js', './content-center.html', './content-center.css', './content-center.js', './content-config.js',
   './content-demo.js', './reward-core.js', './reward-store.js', './course-player.js', './profile.js', './assets/icons/energy-star.svg',
   './', './index.html', './report.html', './home.css', './home.js', './learning-core.js',
@@ -65,19 +65,22 @@ self.addEventListener('fetch', event => {
     })());
     return;
   }
-  if (!ASSET_URLS.has(url.href)) return;
+  // Parent pages keep course/demo context in the query. The shell is static;
+  // only allowlisted resources may share their query-free cache entry.
+  const assetURL = new URL(url.href); assetURL.search = ''; assetURL.hash = '';
+  if (!ASSET_URLS.has(assetURL.href)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     // 当前版本缓存优先，避免等待更新期间混用新 HTML 与旧 JS。
-    const cached = await cache.match(event.request);
+    const cached = await cache.match(assetURL.href);
     if (cached) return cached;
     try {
       const response = await fetch(event.request, { cache: 'no-cache' });
       if (response.ok) {
         try {
-          if (url.href === ROOT || url.href === HOME) {
+          if (assetURL.href === ROOT || assetURL.href === HOME) {
             await Promise.all([cache.put(ROOT, response.clone()), cache.put(HOME, response.clone())]);
-          } else await cache.put(event.request, response.clone());
+          } else await cache.put(assetURL.href, response.clone());
         } catch { /* 缓存空间不足仍返回网络响应。 */ }
       }
       return response;
