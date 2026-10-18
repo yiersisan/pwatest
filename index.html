@@ -7,7 +7,7 @@
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
     />
     <meta name="referrer" content="no-referrer" />
-    <meta name="theme-color" content="#12AD65" />
+    <meta name="theme-color" content="#d9fff0" />
     <meta name="color-scheme" content="light" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -61,6 +61,16 @@
           hidden
           aria-label="播放器已锁定"
         ></button>
+      </div>
+      <div
+        id="watch-progress"
+        class="watch-progress"
+        aria-label="播放进度"
+        aria-live="off"
+        hidden
+      >
+        <span id="watch-current-time">00:00</span> /
+        <span id="watch-total-time">--:--</span>
       </div>
       <details id="watch-menu" class="watch-menu">
         <summary id="watch-menu-toggle" aria-label="家长操作" title="家长操作">

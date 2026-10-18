@@ -47,7 +47,7 @@
 }
 .parent-view .app {
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: 100dvh;
   background: var(--canvas);
   padding: env(safe-area-inset-top, 0)
     max(var(--pad), env(safe-area-inset-right, 0px))

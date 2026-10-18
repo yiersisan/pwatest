@@ -286,6 +286,14 @@
       "history-context",
       next.startsWith("history/"),
     );
+    document.documentElement?.classList?.toggle(
+      "watch-context",
+      next.startsWith("watch/"),
+    );
+    $('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      next.startsWith("watch/") ? "#000000" : "#d9fff0",
+    );
     view.hidden = next.startsWith("watch/");
     watch.hidden = !view.hidden;
     if (next === "configure" && !dirty) {
@@ -931,6 +939,11 @@
       playbackBlocked = blocked;
       syncWatchLock();
     },
+    onTimeChange: (position, duration) => {
+      $("#watch-current-time").textContent = V.duration(position);
+      $("#watch-total-time").textContent =
+        duration === null ? "--:--" : V.duration(duration);
+    },
   });
   function fullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement;
@@ -1018,6 +1031,8 @@
     const item = state.videos.find((v) => v.id === id);
     if (!item) {
       $("#watch-title").textContent = "视频不存在";
+      $("#watch-progress").hidden = true;
+      player.dispose();
       return;
     }
     $("#watch-title").textContent = item.title;
@@ -1069,6 +1084,7 @@
     const items = state.videos.filter((v) => v.courseId === item.courseId),
       next = items[items.indexOf(item) + 1];
     const missing = item.source.kind === "local" && !M.has(id);
+    $("#watch-progress").hidden = missing;
     watch.dataset.missing = String(missing);
     $("#watch-relink-missing").dataset.relink = id;
     $("#watch-lock").disabled = missing;
@@ -1086,6 +1102,7 @@
   };
   function syncWatchLock() {
     const locked = player.isLocked();
+    watch.dataset.locked = String(locked);
     $("#watch-shield").hidden = !locked && !playbackBlocked;
     $("#watch-shield").textContent = playbackBlocked ? "点击开始播放" : "";
     $("#watch-shield").setAttribute(

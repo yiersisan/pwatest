@@ -39,7 +39,7 @@ html.learning-page {
   position: relative;
   isolation: isolate;
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: 100dvh;
   background: var(--canvas);
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px));

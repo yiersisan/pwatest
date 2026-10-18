@@ -14,6 +14,7 @@
     onReward,
     onEnded = () => {},
     onPlaybackBlocked = () => {},
+    onTimeChange = () => {},
     scope = new URL("./", location.href).href,
     URLClass = URL,
     now = Date.now,
@@ -28,6 +29,26 @@
       pendingResume = 0,
       locked = true,
       endHandled = false;
+    function reportTime() {
+      if (
+        !current ||
+        suspended ||
+        video.readyState < 1 ||
+        video.currentSrc !== video.src
+      )
+        return;
+      const duration =
+        Number.isFinite(video.duration) && video.duration > 0
+          ? video.duration
+          : null;
+      const position = Number.isFinite(video.currentTime)
+        ? Math.max(0, video.currentTime)
+        : 0;
+      onTimeChange(
+        duration === null ? position : Math.min(position, duration),
+        duration,
+      );
+    }
     function setLocked(value) {
       locked = value;
       video.controls = !locked;
@@ -89,6 +110,7 @@
     }
     function release() {
       ready = false;
+      onTimeChange(0, null);
       video.pause();
       video.removeAttribute("src");
       video.load();
@@ -143,9 +165,18 @@
       pendingResume = null;
       if (target > 0) video.currentTime = target;
       status("播放进度自动保存");
+      reportTime();
     }
     video.addEventListener("loadedmetadata", metadata);
     video.addEventListener("timeupdate", () => persist());
+    for (const name of [
+      "timeupdate",
+      "durationchange",
+      "seeking",
+      "seeked",
+      "ended",
+    ])
+      video.addEventListener(name, reportTime);
     video.addEventListener("pause", () => persist(true));
     video.addEventListener("playing", () => {
       if (!suspended && current) {

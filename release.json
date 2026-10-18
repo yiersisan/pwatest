@@ -1,9 +1,9 @@
 {
-  "version": "v41-cover-pool-home-cards",
-  "preparedAt": "2026-10-18T08:46:47.498Z",
-  "sourceParent": "badcf81d43aaea98608b88fea08737bebe998246",
+  "version": "v42-viewport-playback-time",
+  "preparedAt": "2026-10-18T09:38:05.863Z",
+  "sourceParent": "e795a5adfe9014da3b6ad6671ab407e9dd87cdd6",
   "tests": {
-    "passed": 80,
+    "passed": 82,
     "failed": 0
   },
   "files": [
@@ -34,8 +34,8 @@
     },
     {
       "path": "app-player.js",
-      "gitBlobSha": "858740b9107519942a5006851e19b646fa51dd6f",
-      "size": 6001
+      "gitBlobSha": "e2b4e629fcf65e1fa21f2a3948dfb540ba3afbe3",
+      "size": 6790
     },
     {
       "path": "app-store.js",
@@ -49,13 +49,13 @@
     },
     {
       "path": "app.css",
-      "gitBlobSha": "530ea2e11214c4eef0358e1cd7031133b4e85e86",
-      "size": 10874
+      "gitBlobSha": "e12196e9cc26e96f4c6ba32ff8b0981c6924613d",
+      "size": 11583
     },
     {
       "path": "app.js",
-      "gitBlobSha": "3bca65691e77d03c7286818d03dcd43b525ca837",
-      "size": 49099
+      "gitBlobSha": "cb47e71526be19d03033ee47edf140fb3f14f7a1",
+      "size": 49714
     },
     {
       "path": "apple-touch-icon.png",
@@ -419,7 +419,7 @@
     },
     {
       "path": "home.css",
-      "gitBlobSha": "a93061e5307ae386aee3c7adfd9d4faee57bc5a4",
+      "gitBlobSha": "fe95f7343cf99f18ae8312a39fcc76d6198a9a0c",
       "size": 16155
     },
     {
@@ -434,8 +434,8 @@
     },
     {
       "path": "index.html",
-      "gitBlobSha": "f909a301c55db81b34cee72fba1a5370ebd4273c",
-      "size": 5660
+      "gitBlobSha": "42f196b7f282063c537cd66e451594185e8b18ad",
+      "size": 5926
     },
     {
       "path": "interaction.css",
@@ -449,12 +449,12 @@
     },
     {
       "path": "manifest.json",
-      "gitBlobSha": "d9cd15538848026c96f9cee66636ff7728f64d4a",
+      "gitBlobSha": "2ad4899e6786eff3a5d22f6b85adfcbdee455d4c",
       "size": 567
     },
     {
       "path": "parent.css",
-      "gitBlobSha": "c7d21176910335701a215880e55da617eae6c450",
+      "gitBlobSha": "b4c98de8ef4d1816ddd49f57704ef99876fe6732",
       "size": 30556
     },
     {
@@ -464,8 +464,8 @@
     },
     {
       "path": "sw.js",
-      "gitBlobSha": "66f3ce378540a63e839de95c08b3508d718c3c4e",
-      "size": 5238
+      "gitBlobSha": "f659e08deaa4692f83097509f8fcaed54bee1421",
+      "size": 5239
     }
   ],
   "includesMedia": false
