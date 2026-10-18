@@ -1,7 +1,7 @@
 // Static application shell only. Video bytes never enter Cache Storage.
 importScripts("./app-core.js");
 const PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = PREFIX + "v43-continuous-today-tasks";
+const CACHE = PREFIX + "v44-compact-manager";
 const ASSETS = [
   "./",
   "./index.html",

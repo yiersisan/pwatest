@@ -467,6 +467,71 @@ select:focus-visible {
 .parent-view .grip {
   touch-action: pinch-zoom;
 }
+/* Compact course management rows; keep touch targets comfortable. */
+.parent-view #video-list .video-row {
+  min-height: 80px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  gap: 10px;
+  border-radius: 14px;
+  flex-wrap: nowrap;
+}
+.parent-view #video-list .grip {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  cursor: grab;
+}
+.parent-view #video-list .grip:active {
+  cursor: grabbing;
+}
+.parent-view #video-list .thumb {
+  width: 96px;
+  border-radius: 9px;
+}
+.parent-view #video-list .video-title h3 {
+  font-size: 16px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.parent-view #video-list .video-title p {
+  margin-top: 4px;
+  font-size: 13px;
+}
+.parent-view #video-list .actions {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 4px;
+}
+.parent-view #video-list .text-action {
+  min-height: 44px;
+  padding: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .parent-view #video-list .video-row {
+    display: grid;
+    grid-template-columns: 44px 72px minmax(0, 1fr);
+    gap: 4px 8px;
+    padding: 8px;
+  }
+  .parent-view #video-list .order {
+    display: none;
+  }
+  .parent-view #video-list .thumb {
+    width: 72px;
+  }
+  .parent-view #video-list .actions {
+    grid-column: 2 / -1;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
 .content-center .hero-sprite {
   background-size: 300% 200%;
 }

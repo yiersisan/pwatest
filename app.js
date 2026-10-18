@@ -460,6 +460,20 @@
   }
   function setupDrag() {
     for (const handle of $$("[data-grip]")) {
+      handle.onkeydown = async (e) => {
+        if (handle.disabled || !["ArrowUp", "ArrowDown"].includes(e.key))
+          return;
+        e.preventDefault();
+        const id = handle.dataset.grip;
+        try {
+          await orderVideo(id, e.key === "ArrowUp" ? -1 : 1);
+          $$("[data-grip]")
+            .find((button) => button.dataset.grip === id)
+            ?.focus();
+        } catch (error) {
+          toast(error.message);
+        }
+      };
       let start = null,
         to = -1,
         moved = false;
@@ -1246,10 +1260,6 @@
       }
       if (b.dataset.moveCourse) {
         moveDialog(b.dataset.moveCourse);
-        return;
-      }
-      if (b.dataset.order) {
-        await orderVideo(b.dataset.order, Number(b.dataset.delta));
         return;
       }
       if (b.dataset.draftRemove) {

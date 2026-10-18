@@ -1,7 +1,7 @@
 {
-  "version": "v43-continuous-today-tasks",
-  "preparedAt": "2026-10-18T09:49:01.725Z",
-  "sourceParent": "c5784b6793a2f39d39a54dc452afdb512abdf54e",
+  "version": "v44-compact-manager",
+  "preparedAt": "2026-10-18T10:25:04.272Z",
+  "sourceParent": "2cb5e9210cbffafd15d05ae6271182770df2cb5e",
   "tests": {
     "passed": 85,
     "failed": 0
@@ -44,18 +44,18 @@
     },
     {
       "path": "app-views.js",
-      "gitBlobSha": "11ad8b5040a0e29626d2bac9439e5ae30ff4bb44",
-      "size": 24274
+      "gitBlobSha": "1f1062582b1e93a2d4c4171a7f084b221282cb31",
+      "size": 24037
     },
     {
       "path": "app.css",
-      "gitBlobSha": "022111c9f3b51531530e0901f11ac46ae267ad05",
-      "size": 11621
+      "gitBlobSha": "06f4803a94580b5993df9c4b2bffb0d26a84b2d2",
+      "size": 13008
     },
     {
       "path": "app.js",
-      "gitBlobSha": "cb47e71526be19d03033ee47edf140fb3f14f7a1",
-      "size": 49714
+      "gitBlobSha": "fcb1d6e6e510c7967761c542f718515166c89001",
+      "size": 50055
     },
     {
       "path": "apple-touch-icon.png",
@@ -464,8 +464,8 @@
     },
     {
       "path": "sw.js",
-      "gitBlobSha": "abac0e0b8d418b92983a26d66a47a937d7d21935",
-      "size": 5239
+      "gitBlobSha": "824b008d666b5334ce36974b521575599fb2242d",
+      "size": 5232
     }
   ],
   "includesMedia": false
