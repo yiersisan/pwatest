@@ -1099,7 +1099,7 @@
 }
 .parent-view .grip,
 .parent-view .reorder {
-  touch-action: none;
+  touch-action: pinch-zoom;
 }
 .parent-view .drop-target {
   outline: 3px solid #12ad65;

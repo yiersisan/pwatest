@@ -422,9 +422,17 @@
   }
   function complete(state, id, at = Date.now()) {
     const v = state.videos.find((v) => v.id === id);
-    if (!v || state.receipts[id]) return false;
-    state.receipts[id] = { videoId: id, courseId: v.courseId, completedAt: at };
-    return true;
+    if (!v) return false;
+    const awarded = !state.receipts[id];
+    if (awarded)
+      state.receipts[id] = {
+        videoId: id,
+        courseId: v.courseId,
+        completedAt: at,
+      };
+    // Finishing a review advances its task too, without awarding twice.
+    syncTodayTasks(state, new Date(at), Math.random, id);
+    return awarded;
   }
   function courseStartVideo(state, courseId) {
     const videos = state.videos.filter((video) => video.courseId === courseId);
@@ -434,37 +442,41 @@
   }
   const localDay = (date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  // Persist only the day's selection; progress and rewards remain authoritative.
-  function automaticTodayIds(state, date = new Date()) {
+  // Reads stay deterministic; random review choices are saved by syncTodayTasks.
+  function automaticTodayIds(
+    state,
+    date = new Date(),
+    random = () => 0,
+    completedId = null,
+  ) {
     const retained =
       state.dailyTasks?.date === localDay(date)
         ? state.dailyTasks.videoIds
         : [];
-    const byId = new Map(state.videos.map((video) => [video.id, video]));
-    const selected = new Map();
-    for (const id of retained) {
-      const video = byId.get(id);
-      if (video && !selected.has(video.courseId))
-        selected.set(video.courseId, video.id);
-    }
-    for (const video of state.videos) {
-      if (
-        !selected.has(video.courseId) &&
-        !state.receipts[video.id] &&
-        !(state.progress[video.id]?.position > 0)
-      )
-        selected.set(video.courseId, video.id);
-    }
     return state.courses.flatMap((course) => {
-      const id = selected.get(course.id);
-      return id ? [id] : [];
+      const videos = state.videos.filter(
+        (video) => video.courseId === course.id,
+      );
+      if (!videos.length) return [];
+      const unfinished = videos.find((video) => !state.receipts[video.id]);
+      if (unfinished) return [unfinished.id];
+      const saved = videos.find((video) => retained.includes(video.id));
+      if (saved && saved.id !== completedId) return [saved.id];
+      const others = videos.filter((video) => video.id !== completedId);
+      const candidates = others.length ? others : videos;
+      return [candidates[Math.floor(random() * candidates.length)].id];
     });
   }
 
-  function syncTodayTasks(state, date = new Date()) {
+  function syncTodayTasks(
+    state,
+    date = new Date(),
+    random = Math.random,
+    completedId = null,
+  ) {
     const next = {
       date: localDay(date),
-      videoIds: automaticTodayIds(state, date),
+      videoIds: automaticTodayIds(state, date, random, completedId),
     };
     if (JSON.stringify(state.dailyTasks) === JSON.stringify(next)) return false;
     state.dailyTasks = next;

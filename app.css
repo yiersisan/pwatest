@@ -29,12 +29,13 @@ html.learning-page body,
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: var(--canvas);
+  background: var(--canvas);
   overflow-x: hidden;
 }
 html.learning-page.watch-context,
-html.learning-page.watch-context body {
-  background-color: #000;
+html.learning-page.watch-context body,
+html.learning-page.watch-context #app-view {
+  background: #000;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -464,7 +465,7 @@ select:focus-visible {
   pointer-events: none;
 }
 .parent-view .grip {
-  touch-action: none;
+  touch-action: pinch-zoom;
 }
 .content-center .hero-sprite {
   background-size: 300% 200%;

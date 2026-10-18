@@ -173,11 +173,7 @@
     return `<div class="status-line">${AppButton({ label, leadingIcon: "play", attrs: { "data-play": v.id, "aria-label": `${label}：${v.title}` } })}</div>`;
   }
   function home(state) {
-    const todayIds = core.todayVideoIds(state),
-      allWatched =
-        state.home.todayMode === "auto" &&
-        state.videos.length > 0 &&
-        todayIds.length === 0;
+    const todayIds = core.todayVideoIds(state);
     const section = (title, subtitle, ids, today = false) => {
       const videos = ids
         .map((id) => state.videos.find((v) => v.id === id))
@@ -189,20 +185,16 @@
         content = `<div class="task-empty-region">${TaskEmptyState({
           icon: today ? "task-list" : "task-calendar",
           title: today
-            ? allWatched
-              ? "课程里的视频都看过啦"
-              : "今天的学习任务还没安排"
+            ? "今天的学习任务还没安排"
             : title === "本周任务"
               ? "本周的学习计划还没安排"
               : `${title}的学习内容还没安排`,
           description: today
-            ? allWatched
-              ? "太棒了！可以到「内容中心」复习喜欢的视频。"
-              : "请家长点击「定制」，安排今天的小任务。"
+            ? "请家长点击「定制」，安排今天的小任务。"
             : title === "本周任务"
               ? "请家长点击「定制」，添加本周的学习内容。"
               : "请家长点击「定制」，添加这里的学习内容。",
-          hasCustomizeAction: today && allWatched,
+          hasCustomizeAction: false,
         })}</div>`;
       } else {
         content =
@@ -264,13 +256,13 @@
       return `<article class="home-card">${taskArtwork(v, state)}<div class="details"><h3 class="lesson-title">${esc(v.title)}</h3>${taskAction(v, state)}</div>${editable ? `<div class="config-tools"><button data-config-order="${esc(key)}" data-index="${i}" data-delta="-1" aria-label="前移${esc(v.title)}">←</button><button data-config-order="${esc(key)}" data-index="${i}" data-delta="1" aria-label="后移${esc(v.title)}">→</button><button data-config-remove="${esc(key)}" data-index="${i}">移除</button></div>` : ""}</article>`;
     };
     const rail = (ids, key, editable = true) =>
-      `<div class="config-rail">${ids.map((id, i) => card(id, key, i, editable)).join("")}${editable ? `<button class="add-video" data-config-add="${esc(key)}">＋ 添加视频</button>` : ids.length ? "" : '<p class="empty">当前没有未看过的视频，导入新视频后会自动安排。</p>'}</div>`;
+      `<div class="config-rail">${ids.map((id, i) => card(id, key, i, editable)).join("")}${editable ? `<button class="add-video" data-config-add="${esc(key)}">＋ 添加视频</button>` : ids.length ? "" : '<p class="empty">当前还没有课程视频，导入后会自动安排。</p>'}</div>`;
     const automatic = draft.todayMode === "auto";
     return parent(
       "configure",
       "首页配置",
       "调整孩子首页展示的视频与栏目",
-      `<main id="home-editor"><section class="config-section"><div class="section-heading"><h2>今日任务</h2><label class="today-mode">安排方式<select id="today-mode"><option value="auto" ${automatic ? "selected" : ""}>自动安排</option><option value="manual" ${automatic ? "" : "selected"}>手动选择</option></select></label></div><p class="muted">自动安排时，每门课程选一个没看过的视频；当天保留任务，学完可再次学习，次日安排新的任务。</p>${rail(core.todayVideoIds(state, draft), "today", !automatic)}</section>${draft.sections.map((s, i) => `<section class="config-section"><div class="section-heading"><label class="editable-title">栏目标题<input data-section-title="${s.id}" value="${esc(s.title)}"></label><label class="editable-subtitle">副标题<input data-section-subtitle="${s.id}" value="${esc(s.subtitle)}"></label><button class="text-action" data-section-order="${i}" data-delta="-1">↑</button><button class="text-action" data-section-order="${i}" data-delta="1">↓</button><button class="text-action danger" data-section-delete="${s.id}">删除栏目</button></div>${rail(s.videoIds, s.id)}</section>`).join("")}</main><button class="section-add" id="add-section">＋ 添加内容栏目</button><p class="footnote" id="save-status">${dirty ? "有未保存的修改" : "配置已保存"} · 移除首页展示不会删除课程视频</p>`,
+      `<main id="home-editor"><section class="config-section"><div class="section-heading"><h2>今日任务</h2><label class="today-mode">安排方式<select id="today-mode"><option value="auto" ${automatic ? "selected" : ""}>自动安排</option><option value="manual" ${automatic ? "" : "selected"}>手动选择</option></select></label></div><p class="muted">自动安排时，每门课程按顺序显示下一条未完成的视频；全部学完后随机安排本课程的视频复习，看完后继续安排。</p>${rail(core.todayVideoIds(state, draft), "today", !automatic)}</section>${draft.sections.map((s, i) => `<section class="config-section"><div class="section-heading"><label class="editable-title">栏目标题<input data-section-title="${s.id}" value="${esc(s.title)}"></label><label class="editable-subtitle">副标题<input data-section-subtitle="${s.id}" value="${esc(s.subtitle)}"></label><button class="text-action" data-section-order="${i}" data-delta="-1">↑</button><button class="text-action" data-section-order="${i}" data-delta="1">↓</button><button class="text-action danger" data-section-delete="${s.id}">删除栏目</button></div>${rail(s.videoIds, s.id)}</section>`).join("")}</main><button class="section-add" id="add-section">＋ 添加内容栏目</button><p class="footnote" id="save-status">${dirty ? "有未保存的修改" : "配置已保存"} · 移除首页展示不会删除课程视频</p>`,
       `<div class="actions">${AppButton({ label: "保存配置", leadingIcon: "save", attrs: { id: "save-home" } })}</div>`,
     );
   }
