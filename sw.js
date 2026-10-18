@@ -1,6 +1,7 @@
 // Static application shell only. Video bytes never enter Cache Storage.
+importScripts("./app-core.js");
 const PREFIX = `pwatest-${self.registration.scope}-`;
-const CACHE = PREFIX + "v37-home-task-flow";
+const CACHE = PREFIX + "v41-cover-pool-home-cards";
 const ASSETS = [
   "./",
   "./index.html",
@@ -26,7 +27,7 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
   "./apple-touch-icon.png",
-  "./assets/images/illustration-atlas.png",
+  ...AppCore.COVER_ATLASES,
   "./assets/parent/icons/sprite.svg",
   "./assets/parent/images/header-landscape.svg",
   "./assets/content-center/header-landscape.svg",

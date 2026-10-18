@@ -118,7 +118,7 @@ select:focus-visible {
 }
 .parent-view .tile.homepage-cover,
 .learning-home .tile.homepage-cover {
-  background-image: url("./assets/images/illustration-atlas.png");
+  background-image: url("./assets/images/covers/illustration-atlas.webp");
 }
 .learning-home .thumb {
   width: 100%;
@@ -139,7 +139,7 @@ select:focus-visible {
   background-repeat: no-repeat;
 }
 .parent-view .homepage-cover {
-  background-image: url("./assets/images/illustration-atlas.png");
+  background-image: url("./assets/images/covers/illustration-atlas.webp");
 }
 .content-center .course-real-count {
   color: #708598;
@@ -215,41 +215,24 @@ select:focus-visible {
 .parent-view .match-item strong {
   overflow-wrap: anywhere;
 }
+/* The video owns the viewport; all parent controls share one quiet entry. */
 .watch-view {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
   min-height: 100dvh;
-  background: #111b19;
-  color: white;
-  padding: max(16px, env(safe-area-inset-top))
-    max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom))
-    max(20px, env(safe-area-inset-left));
-}
-.watch-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.watch-head > div {
-  flex: 1;
-  min-width: 0;
-}
-.watch-head h1 {
-  font-size: 24px;
-  overflow-wrap: anywhere;
-}
-.watch-head p {
-  font-size: 14px;
-  color: #b9d5c7;
+  background: #000;
+  color: #f2f7f4;
+  z-index: 30;
 }
 .watch-stage {
-  position: relative;
-  max-width: 1100px;
-  margin: 20px auto;
-  background: black;
-  aspect-ratio: 16/9;
-  border-radius: 18px;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
+  background: #000;
 }
 .watch-stage video {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -259,18 +242,199 @@ select:focus-visible {
   inset: 0;
   width: 100%;
   height: 100%;
+  border: 0;
+  padding: 0;
   background: transparent;
+  cursor: default;
+}
+.watch-shield:not(:empty) {
+  color: #f2f7f4;
+  background: #0007;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.watch-menu {
+  position: absolute;
+  z-index: 2;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+}
+.watch-menu > summary {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #111a16b3;
+  color: #c9d1cc;
+  opacity: 0.6;
+  list-style: none;
+  cursor: pointer;
+}
+.watch-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.watch-menu > summary:is(:hover, :focus-visible),
+.watch-menu[open] > summary {
+  opacity: 1;
+}
+.watch-panel {
+  width: min(
+    320px,
+    calc(100vw - 28px - env(safe-area-inset-left) - env(safe-area-inset-right))
+  );
+  max-height: calc(
+    100dvh - 86px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  overflow: auto;
+  margin-top: 8px;
+  padding: 18px;
+  border: 1px solid #ffffff1f;
+  border-radius: 18px;
+  background: #19211ef5;
+  box-shadow: 0 12px 36px #0005;
+}
+.watch-head {
+  margin-bottom: 14px;
+}
+.watch-head h1 {
+  margin: 6px 0;
+  font-size: 17px;
+  line-height: 1.5;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.watch-head p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #a8b5ad;
+}
+.watch-head .watch-eyebrow {
+  font-size: 11px;
+  color: #99b7a6;
+}
+.watch-tools,
+.watch-action-buttons {
+  display: grid;
+  gap: 2px;
+}
+:root .watch-view .app-button {
+  min-height: 44px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 400;
+  gap: 10px;
+  justify-content: flex-start;
+  background: transparent;
+  color: #d2dcd5;
+  box-shadow: none;
+}
+:root .watch-view .app-button .icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+:root .watch-view .app-button[aria-pressed="true"] {
+  color: #b4dec4;
+}
+:root .watch-view .app-button:not(:disabled):hover {
+  background: #ffffff0d;
+  filter: none;
+}
+:root .watch-view :is(.app-button, summary):focus-visible {
+  outline: 2px solid #b5f1ca;
+  outline-offset: 2px;
+}
+.watch-shield:focus-visible {
+  outline: 3px solid #b5f1ca;
+  outline-offset: -6px;
 }
 .watch-actions {
   display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
 }
-.watch-actions span {
+.watch-note {
+  order: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #ffffff14;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #9cafa1;
+}
+.watch-note .icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 2px;
+}
+.watch-view[data-missing="true"] {
+  background: #111b17;
+}
+.watch-view[data-missing="true"] .watch-stage {
+  background: transparent;
+}
+#watch-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: max(70px, env(safe-area-inset-top)) 24px
+    max(28px, env(safe-area-inset-bottom));
+  overflow: auto;
+  text-align: center;
+  color: #d7e5dc;
+}
+#watch-empty > .icon {
+  width: 32px;
+  height: 32px;
+  color: #91b49f;
+}
+#watch-empty h2 {
+  margin: 20px 0 8px;
+  font-size: 22px;
+  font-weight: 500;
+}
+#watch-empty p {
+  margin: 0 0 24px;
+  color: #9fafa4;
   font-size: 14px;
-  color: #bbd6cb;
+  line-height: 1.8;
+}
+:root .watch-view #watch-relink-missing {
+  background: #b5dec3;
+  color: #173c27;
+  justify-content: center;
+  padding-inline: 22px;
+}
+.watch-notice {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(560px, 88%);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #152019e6;
+  color: #d0dfd4;
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: center;
+  pointer-events: none;
 }
 .parent-view .grip {
   touch-action: none;
@@ -282,15 +446,79 @@ select:focus-visible {
   display: block;
 }
 
+/* Shared task imagery and actions in the child home and parent configuration. */
+:is(.learning-home .task-card, .parent-view .home-card) .task-artwork {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+:is(.learning-home .task-card, .parent-view .home-card) .task-subject {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ffffffd9;
+  border-radius: 12px;
+  background: #fffffff2;
+  color: var(--subject);
+  font-size: 19px;
+  font-weight: 750;
+  line-height: 1;
+  box-shadow: 0 2px 6px #123b2612;
+}
+:is(.learning-home .task-card, .parent-view .home-card) .task-duration {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #173829ba;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+:is(.learning-home .task-card, .parent-view .home-card) .details {
+  padding: 14px 16px 18px;
+}
+:is(.learning-home .task-card, .parent-view .home-card) .lesson-title {
+  margin: 0;
+  padding: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-height: 2.6em;
+  overflow: hidden;
+  white-space: normal;
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+:is(.learning-home .task-card, .parent-view .home-card) .status-line {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+.parent-view .home-card .config-tools {
+  justify-content: center;
+  border-top: 1px solid #eef4ef;
+  padding: 10px 12px;
+}
+.learning-home .task-card .details {
+  min-height: 0;
+  padding: 16px;
+}
+.learning-home .task-card .status-line {
+  margin-top: 0;
+}
+
 @media (max-width: 800px) {
   .parent-view .lesson-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .watch-head {
-    flex-wrap: wrap;
-  }
-  .watch-head > div {
-    flex-basis: 65%;
   }
 }
 @media (max-width: 520px) {
@@ -309,19 +537,6 @@ select:focus-visible {
   .activity {
     font-size: 14px;
   }
-  .watch-head h1 {
-    font-size: 18px;
-  }
-}
-
-#watch-empty {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  padding: 24px;
-  text-align: center;
-  color: #cbe3d7;
 }
 
 .parent-view .today-mode {

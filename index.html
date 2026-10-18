@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
     />
     <meta name="referrer" content="no-referrer" />
     <meta name="theme-color" content="#12AD65" />
@@ -39,35 +39,76 @@
       <p class="boot-message" role="status">正在打开学习岛…</p>
     </div>
     <section id="watch-view" class="watch-view" hidden aria-label="视频播放器">
-      <header class="watch-head">
-        <button id="watch-back" class="app-back" aria-label="返回课程">
-          <svg class="icon" aria-hidden="true" focusable="false">
-            <use href="./assets/parent/icons/sprite.svg#back"></use>
-          </svg>
-        </button>
-        <div>
-          <h1 id="watch-title"></h1>
-          <p id="watch-status" role="status"></p>
-        </div>
-        <button id="watch-lock" class="app-button app-button--secondary">
-          锁定操作</button
-        ><button id="watch-fullscreen" class="app-button app-button--secondary">
-          全屏播放
-        </button>
-      </header>
       <div class="watch-stage" id="watch-stage">
-        <p id="watch-empty" hidden>
-          本机视频需要重新关联，课程与学习记录已保留。
-        </p>
-        <video id="video" playsinline controls preload="metadata"></video
-        ><button
+        <div id="watch-empty" hidden>
+          <svg class="icon" aria-hidden="true">
+            <use href="./assets/parent/icons/sprite.svg#swap"></use>
+          </svg>
+          <h2>需要重新关联视频</h2>
+          <p>请家长选择原视频，课程和学习记录都还在。</p>
+          <button
+            id="watch-relink-missing"
+            class="app-button app-button--primary"
+            data-relink=""
+          >
+            重新关联本机视频
+          </button>
+        </div>
+        <video id="video" playsinline preload="metadata"></video>
+        <button
           id="watch-shield"
           class="watch-shield"
           hidden
           aria-label="播放器已锁定"
         ></button>
       </div>
-      <div id="watch-actions" class="watch-actions"></div>
+      <details id="watch-menu" class="watch-menu">
+        <summary id="watch-menu-toggle" aria-label="家长操作" title="家长操作">
+          <svg class="icon" aria-hidden="true" focusable="false">
+            <use href="./assets/parent/icons/sprite.svg#more"></use>
+          </svg>
+        </summary>
+        <div class="watch-panel">
+          <header class="watch-head">
+            <p class="watch-eyebrow">家长操作</p>
+            <h1 id="watch-title"></h1>
+            <p id="watch-status" role="status"></p>
+          </header>
+          <nav class="watch-tools" aria-label="播放选项">
+            <button
+              id="watch-back"
+              class="app-button app-button--secondary"
+              aria-label="返回课程"
+            >
+              <svg class="icon" aria-hidden="true" focusable="false">
+                <use href="./assets/parent/icons/sprite.svg#back"></use>
+              </svg>
+              <span id="watch-back-label">返回课程</span>
+            </button>
+            <button
+              id="watch-lock"
+              class="app-button app-button--secondary"
+              aria-pressed="true"
+            >
+              <svg class="icon" aria-hidden="true" focusable="false">
+                <use href="./assets/parent/icons/sprite.svg#lock"></use>
+              </svg>
+              <span id="watch-lock-label">解锁操作</span>
+            </button>
+            <button
+              id="watch-fullscreen"
+              class="app-button app-button--secondary"
+            >
+              <svg class="icon" aria-hidden="true" focusable="false">
+                <use href="./assets/parent/icons/sprite.svg#fullscreen"></use>
+              </svg>
+              <span>进入全屏</span>
+            </button>
+          </nav>
+          <div id="watch-actions" class="watch-actions"></div>
+        </div>
+      </details>
+      <p id="watch-notice" class="watch-notice" role="status" hidden></p>
     </section>
     <div class="parent-view" id="modal-host">
       <dialog id="dialog" aria-labelledby="modal-title"></dialog>

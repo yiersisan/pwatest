@@ -12,6 +12,8 @@
     status,
     onChange,
     onReward,
+    onEnded = () => {},
+    onPlaybackBlocked = () => {},
     scope = new URL("./", location.href).href,
     URLClass = URL,
     now = Date.now,
@@ -24,7 +26,26 @@
       suspended = true,
       saveChain = Promise.resolve(),
       pendingResume = 0,
-      locked = false;
+      locked = true,
+      endHandled = false;
+    function setLocked(value) {
+      locked = value;
+      video.controls = !locked;
+      return locked;
+    }
+    async function play() {
+      if (!current || suspended) return;
+      const ticket = generation;
+      try {
+        await video.play();
+        if (ticket === generation && !suspended) onPlaybackBlocked(false);
+      } catch {
+        if (ticket === generation && !suspended) {
+          status("请点击播放器开始播放");
+          onPlaybackBlocked(true);
+        }
+      }
+    }
     function enqueue(edit) {
       saveChain = saveChain
         .catch(() => {})
@@ -77,16 +98,17 @@
       }
     }
     async function select(item, progress) {
+      const ticket = ++generation;
       await persist(true).catch(() => {});
-      generation++;
+      if (ticket !== generation) return false;
       suspended = true;
       release();
       current = item;
-      locked = false;
-      video.controls = true;
+      setLocked(true);
+      endHandled = false;
+      onPlaybackBlocked(false);
       pendingResume = progress?.position || 0;
       suspended = false;
-      const ticket = generation;
       let url;
       if (item.source.kind === "local") {
         const file = media.get(item.id);
@@ -102,11 +124,7 @@
       video.src = url;
       video.load();
       status("正在加载视频…");
-      try {
-        await video.play();
-      } catch {
-        if (ticket === generation) status("请点击播放器开始播放");
-      }
+      await play();
       return true;
     }
     function metadata() {
@@ -129,16 +147,25 @@
     video.addEventListener("loadedmetadata", metadata);
     video.addEventListener("timeupdate", () => persist());
     video.addEventListener("pause", () => persist(true));
+    video.addEventListener("playing", () => {
+      if (!suspended && current) {
+        onPlaybackBlocked(false);
+        if (!video.ended) endHandled = false;
+      }
+    });
     video.addEventListener("ended", () => {
       if (
         !current ||
         suspended ||
         !ready ||
+        endHandled ||
         !video.ended ||
         video.currentSrc !== video.src
       )
         return;
-      const id = current.id,
+      endHandled = true;
+      const ticket = generation,
+        id = current.id,
         duration = video.duration,
         at = now();
       enqueue((state) => {
@@ -147,10 +174,14 @@
         return awarded;
       })
         .then(({ state, result }) => {
+          if (ticket !== generation || suspended || current?.id !== id) return;
           status("已完成，学习记录已保存");
           if (result) onReward(state, id);
+          onEnded(state, id);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (ticket === generation) endHandled = false;
+        });
     });
     video.addEventListener("error", () => {
       if (current && !suspended)
@@ -159,24 +190,27 @@
     return {
       select,
       pause: async () => {
-        await persist(true).catch(() => {});
+        const saved = persist(true);
         suspended = true;
+        generation++;
         video.pause();
+        await saved.catch(() => {});
       },
       resume: () => {
         suspended = false;
       },
       flush: () => persist(true),
+      play,
       current: () => current,
-      lock: () => {
-        locked = !locked;
-        video.controls = !locked;
-        return locked;
-      },
+      setLocked,
+      lock: () => setLocked(!locked),
       isLocked: () => locked,
       dispose: () => {
+        generation++;
         suspended = true;
         current = null;
+        setLocked(true);
+        onPlaybackBlocked(false);
         release();
       },
     };

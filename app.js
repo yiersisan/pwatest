@@ -33,7 +33,11 @@
     historyError = "",
     historyTicket = 0,
     watchReturn = null,
-    playRequest = null;
+    playRequest = null,
+    pendingAutoEnd = null,
+    playbackBlocked = false,
+    watchFullscreenTask = null,
+    watchOwnsFullscreen = false;
   async function loadHistory(target = route) {
     const ticket = ++historyTicket;
     historyStatus = "loading";
@@ -162,8 +166,18 @@
     "close",
     () => lastFocus?.isConnected && lastFocus.focus(),
   );
-  function parentAccess(target, callback) {
-    if (unlocked) {
+  dialog.addEventListener("close", () => {
+    // A completed video waits until the parent finishes or cancels the dialog.
+    setTimeout(() => {
+      if (pendingAutoEnd && !dialog.open) {
+        const id = pendingAutoEnd;
+        pendingAutoEnd = null;
+        advanceWatch(id);
+      }
+    }, 0);
+  });
+  function parentAccess(target, callback, singleAction = false) {
+    if (unlocked && !singleAction) {
       if (callback) callback();
       else go(target);
       return;
@@ -172,16 +186,16 @@
       b = 4 + Math.floor(Math.random() * 6);
     modal(
       "家长验证",
-      `<p>请家长完成计算后进入定制</p><label>${a} + ${b} =<input id="parent-answer" inputmode="numeric" autocomplete="off" aria-label="计算结果"></label>`,
+      `<p>${singleAction ? "请家长完成计算后继续本次操作" : "请家长完成计算后进入定制"}</p><label>${a} + ${b} =<input id="parent-answer" inputmode="numeric" autocomplete="off" aria-label="计算结果"></label>`,
       [
         { text: "取消", run: close },
         {
-          text: "进入家长模式",
+          text: singleAction ? "验证并继续" : "进入家长模式",
           primary: true,
           run: () => {
             if (Number($("#parent-answer").value) !== a + b)
               throw Error("答案不正确，请再试一次");
-            unlocked = true;
+            if (!singleAction) unlocked = true;
             close();
             if (callback) callback();
             else go(target);
@@ -230,6 +244,9 @@
       parentAccess(next);
       return;
     }
+    // Request before the first await so a course click retains user activation.
+    if (next.startsWith("watch/") && !pendingWrites && !writeFailed)
+      requestWatchFullscreen(next.split("/")[1]);
     try {
       await pending;
     } catch {
@@ -248,7 +265,9 @@
       return;
     }
     if (route) routeScroll.set(route, scrollY);
+    if (route !== next) pendingAutoEnd = null;
     if (route.startsWith("watch/") && route !== next) await player.pause();
+    if (!next.startsWith("watch/")) await leaveWatchFullscreen();
     // Parent pages share authorization; returning to a child page locks it again.
     if (!isParent(next) && (isParent(route) || next === "home"))
       unlocked = false;
@@ -746,7 +765,11 @@
   };
   function pickRelink(id) {
     pendingPlay = id || null;
-    parentAccess(null, () => $("#pick-relink").click());
+    parentAccess(
+      null,
+      () => $("#pick-relink").click(),
+      route.startsWith("watch/"),
+    );
   }
   function idsFor(key) {
     return key === "today"
@@ -882,7 +905,11 @@
     media: M,
     store: S,
     core: C,
-    status: (text) => ($("#watch-status").textContent = text),
+    status: (text) => {
+      $("#watch-status").textContent = text;
+      $("#watch-notice").textContent = text;
+      $("#watch-notice").hidden = !/未能播放|未保存|请先重新关联/.test(text);
+    },
     onChange: (s) => {
       state = s;
     },
@@ -899,7 +926,94 @@
         );
       updateWatchActions();
     },
+    onEnded: (_state, id) => advanceWatch(id),
+    onPlaybackBlocked: (blocked) => {
+      playbackBlocked = blocked;
+      syncWatchLock();
+    },
   });
+  function fullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement;
+  }
+  function syncWatchFullscreen() {
+    const root = document.documentElement;
+    const supported = root?.requestFullscreen || root?.webkitRequestFullscreen;
+    watch.dataset.fullscreen =
+      root && fullscreenElement() === root ? "system" : "page";
+    $("#watch-fullscreen").hidden =
+      !supported || (root && fullscreenElement() === root);
+  }
+  async function leaveWatchFullscreen() {
+    if (
+      !watchOwnsFullscreen ||
+      fullscreenElement() !== document.documentElement
+    )
+      return;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    try {
+      await exit?.call(document);
+    } catch {
+      // The browser may already be leaving fullscreen (Escape, app switch).
+    }
+    watchOwnsFullscreen = false;
+    syncWatchFullscreen();
+  }
+  function requestWatchFullscreen(id = route.split("/")[1]) {
+    const item = state?.videos.find((v) => v.id === id);
+    if (!item || (item.source.kind === "local" && !M.has(id)))
+      return Promise.resolve(false);
+    const root = document.documentElement;
+    if (root && fullscreenElement() === root) return Promise.resolve(true);
+    if (watchFullscreenTask) return watchFullscreenTask;
+    const request = root?.requestFullscreen || root?.webkitRequestFullscreen;
+    if (!request) return Promise.resolve(false);
+    try {
+      // Fullscreen the document, keeping the shield, parent dialog and menu
+      // together. Never hand the video to native fullscreen controls.
+      watchFullscreenTask = Promise.resolve(
+        request.call(root, { navigationUI: "hide" }),
+      )
+        .then(async () => {
+          watchOwnsFullscreen = fullscreenElement() === root;
+          const active = state?.videos.find(
+            (v) => "#/watch/" + v.id === location.hash,
+          );
+          if (!active || (active.source.kind === "local" && !M.has(active.id)))
+            await leaveWatchFullscreen();
+          syncWatchFullscreen();
+          return watchOwnsFullscreen;
+        })
+        .catch(() => false)
+        .finally(() => {
+          watchFullscreenTask = null;
+        });
+      return watchFullscreenTask;
+    } catch {
+      return Promise.resolve(false);
+    }
+  }
+  document.addEventListener("fullscreenchange", syncWatchFullscreen);
+  document.addEventListener("webkitfullscreenchange", syncWatchFullscreen);
+  function advanceWatch(id) {
+    if (route !== "watch/" + id || location.hash !== "#/" + route) return;
+    if (dialog.open) {
+      pendingAutoEnd = id;
+      return;
+    }
+    const item = state.videos.find((v) => v.id === id);
+    if (!item) return;
+    const items = state.videos.filter((v) => v.courseId === item.courseId),
+      next = items[items.indexOf(item) + 1];
+    if (next) {
+      playRequest = { id: next.id, replay: true };
+      go("watch/" + next.id);
+    } else {
+      $("#watch-status").textContent = "本课程已播放完，学习记录已保存";
+      $("#watch-notice").textContent = "本课程已播放完";
+      $("#watch-notice").hidden = false;
+      updateWatchActions();
+    }
+  }
   async function launch(id) {
     const item = state.videos.find((v) => v.id === id);
     if (!item) {
@@ -907,21 +1021,31 @@
       return;
     }
     $("#watch-title").textContent = item.title;
+    $("#watch-menu").open = false;
+    $("#watch-notice").hidden = true;
+    $("#watch-back-label").textContent = watchReturn
+      ? "返回学习记录"
+      : "返回课程";
     $("#watch-back").setAttribute(
       "aria-label",
       watchReturn ? "返回学习记录" : "返回课程",
     );
-    $("#watch-lock").textContent = "锁定操作";
-    $("#watch-shield").hidden = true;
+    player.setLocked(true);
+    playbackBlocked = false;
+    syncWatchLock();
     updateWatchActions();
+    syncWatchFullscreen();
     if (item.source.kind === "local" && !M.has(id)) {
       player.dispose();
+      $("#watch-shield").hidden = true;
       $("#video").hidden = true;
       $("#watch-empty").hidden = false;
       $("#watch-status").textContent =
         "请家长重新选择原视频，标题与学习进度已保留";
+      await leaveWatchFullscreen();
       return;
     }
+    requestWatchFullscreen(id);
     $("#video").hidden = false;
     $("#watch-empty").hidden = true;
     const replay = playRequest?.id === id && playRequest.replay;
@@ -929,15 +1053,14 @@
     if (!replay && player.current()?.id === id && $("#video").src) {
       player.resume();
       if ($("#video").ended) $("#video").currentTime = 0;
-      $("#video")
-        .play()
-        .catch(() => {});
+      await player.play();
       return;
     }
     await player.select(
       item,
       replay || state.receipts[id] ? null : state.progress[id],
     );
+    syncWatchLock();
   }
   function updateWatchActions() {
     const id = route.split("/")[1],
@@ -945,32 +1068,55 @@
     if (!item) return;
     const items = state.videos.filter((v) => v.courseId === item.courseId),
       next = items[items.indexOf(item) + 1];
+    const missing = item.source.kind === "local" && !M.has(id);
+    watch.dataset.missing = String(missing);
+    $("#watch-relink-missing").dataset.relink = id;
+    $("#watch-lock").disabled = missing;
+    $("#watch-fullscreen").disabled = missing;
     $("#watch-actions").innerHTML =
-      `${V.AppButton({ label: "从头播放", variant: "secondary", attrs: { "data-restart": true } })}${item.source.kind === "local" ? V.AppButton({ label: "重新关联本机视频", variant: "secondary", attrs: { "data-relink": id } }) : ""}${next ? V.AppButton({ label: "下一个视频", leadingIcon: "play", attrs: { "data-play": next.id } }) : ""}<span>${state.receipts[id] ? "已完成此视频" : "观看完成后记录学习情况"}</span>`;
+      `<p class="watch-note">${V.icon(state.receipts[id] ? "check" : "clock")}<span>${next ? "播完自动播放下一条 · 学习进度自动保存" : "本课程最后一条 · 播完自动保存学习记录"}</span></p><div class="watch-action-buttons">${V.AppButton({ label: "从头播放", leadingIcon: "restart", variant: "secondary", disabled: missing, attrs: { "data-restart": true } })}${item.source.kind === "local" ? V.AppButton({ label: "重新关联", leadingIcon: "swap", variant: "secondary", className: "watch-relink", attrs: { "data-relink": id, "aria-label": "重新关联本机视频" } }) : ""}</div>`;
   }
   $("#watch-back").onclick = () => {
     const v = state.videos.find((v) => v.id === route.split("/")[1]);
-    go(watchReturn || (v ? "course/" + v.courseId : "content"));
+    parentAccess(
+      null,
+      () => go(watchReturn || (v ? "course/" + v.courseId : "content")),
+      true,
+    );
   };
+  function syncWatchLock() {
+    const locked = player.isLocked();
+    $("#watch-shield").hidden = !locked && !playbackBlocked;
+    $("#watch-shield").textContent = playbackBlocked ? "点击开始播放" : "";
+    $("#watch-shield").setAttribute(
+      "aria-label",
+      playbackBlocked ? "点击开始播放" : "播放器已锁定",
+    );
+    $("#watch-shield").tabIndex = playbackBlocked ? 0 : -1;
+    $("#watch-lock-label").textContent = locked ? "解锁操作" : "锁定操作";
+    $("#watch-lock").setAttribute("aria-pressed", String(locked));
+  }
   $("#watch-lock").onclick = () => {
-    const locked = player.lock();
-    $("#watch-shield").hidden = !locked;
-    $("#watch-lock").textContent = locked ? "解锁操作" : "锁定操作";
+    parentAccess(
+      null,
+      () => {
+        player.lock();
+        syncWatchLock();
+      },
+      true,
+    );
+  };
+  $("#watch-shield").onclick = () => {
+    $("#watch-menu").open = false;
+    if (playbackBlocked) {
+      requestWatchFullscreen();
+      player.play();
+    }
   };
   $("#watch-fullscreen").onclick = async () => {
-    const video = $("#video");
-    if (player.isLocked()) {
-      toast("请先解锁，再进入系统全屏");
-      return;
-    }
-    try {
-      if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
-      else if ($("#watch-stage").requestFullscreen)
-        await $("#watch-stage").requestFullscreen();
-      else toast("请使用播放器的全屏按钮");
-    } catch {
-      toast("请点击播放器的全屏按钮");
-    }
+    $("#watch-menu").open = false;
+    if (!(await requestWatchFullscreen()))
+      toast("浏览器未允许系统全屏，已保持铺满页面播放");
   };
   document.addEventListener("keydown", (e) => {
     if (
@@ -1177,11 +1323,11 @@
         return;
       }
       if (b.hasAttribute("data-restart")) {
+        $("#watch-menu").open = false;
+        requestWatchFullscreen();
         $("#video").currentTime = 0;
         player.resume();
-        $("#video")
-          .play()
-          .catch(() => {});
+        await player.play();
         return;
       }
       if (b.hasAttribute("data-profile")) {

@@ -3,7 +3,45 @@
   else root.AppCore = factory();
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
-  const COVER_INDEXES = Object.freeze([3, 4, 5, 6, 7]);
+  // Append new atlases only: these positions are persisted in backups.
+  const COVER_ATLASES = Object.freeze(
+    [
+      "illustration-atlas",
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+    ].map((name) => `./assets/images/covers/${name}.webp`),
+  );
+  const COVER_INDEXES = Object.freeze(
+    Array.from({ length: COVER_ATLASES.length * 8 }, (_, i) => i),
+  );
+  const COVER_POOL_VERSION = 1;
+  function coverAsset(index) {
+    if (!COVER_INDEXES.includes(index)) return null;
+    const cell = index % 8;
+    return {
+      path: COVER_ATLASES[Math.floor(index / 8)],
+      column: cell % 4,
+      row: Math.floor(cell / 4),
+    };
+  }
+  function randomCover(random = Math.random) {
+    return COVER_INDEXES[Math.floor(random() * COVER_INDEXES.length)];
+  }
+  function upgradeCoverPool(state, random = Math.random) {
+    if (state.coverPoolVersion === COVER_POOL_VERSION) return false;
+    for (const video of [...state.videos, ...state.drafts])
+      video.coverIndex = randomCover(random);
+    state.coverPoolVersion = COVER_POOL_VERSION;
+    return true;
+  }
   const HEROES = Object.freeze([
     "hero-01",
     "hero-02",
@@ -46,12 +84,14 @@
     const pad = (n) => String(n).padStart(2, "0");
     return {
       title: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${sequence}`,
-      coverIndex: COVER_INDEXES[Math.floor(random() * COVER_INDEXES.length)],
+      coverIndex: randomCover(random),
     };
   }
   function initial() {
     return {
       schemaVersion: 1,
+      coverPoolVersion: COVER_POOL_VERSION,
+      dailyTasks: null,
       revision: 0,
       courses: [
         ["english", "英", "趣味英语", "#159fea", "hero-04"],
@@ -199,6 +239,13 @@
     )
       throw Error("数据条目过多");
     const state = initial();
+    if (
+      input.coverPoolVersion !== undefined &&
+      ![0, COVER_POOL_VERSION].includes(input.coverPoolVersion)
+    )
+      throw Error("封面素材版本不正确");
+    // Legacy snapshots remain marked until the store migrates them atomically.
+    state.coverPoolVersion = input.coverPoolVersion ?? 0;
     state.revision =
       Number.isSafeInteger(input.revision) && input.revision >= 0
         ? input.revision
@@ -268,6 +315,23 @@
         videoId: id,
         courseId: r.courseId,
         completedAt: r.completedAt,
+      };
+    }
+    if (input.dailyTasks != null) {
+      const daily = input.dailyTasks;
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(daily.date || "") ||
+        !Array.isArray(daily.videoIds) ||
+        daily.videoIds.length > 200 ||
+        new Set(daily.videoIds).size !== daily.videoIds.length ||
+        daily.videoIds.some((id) => !idOK(id))
+      )
+        throw Error("今日任务记录不正确");
+      state.dailyTasks = {
+        date: daily.date,
+        videoIds: daily.videoIds.filter((id) =>
+          state.videos.some((v) => v.id === id),
+        ),
       };
     }
     state.settings = {
@@ -368,26 +432,51 @@
       videos.find((video) => !state.receipts[video.id]) || videos[0] || null
     );
   }
-  // Derive automatic tasks without writing a second copy of learning state.
-  // Manual lists retain completed cards and an explicitly empty configuration.
-  function todayVideoIds(state, home = state.home) {
+  const localDay = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  // Persist only the day's selection; progress and rewards remain authoritative.
+  function automaticTodayIds(state, date = new Date()) {
+    const retained =
+      state.dailyTasks?.date === localDay(date)
+        ? state.dailyTasks.videoIds
+        : [];
+    const byId = new Map(state.videos.map((video) => [video.id, video]));
+    const selected = new Map();
+    for (const id of retained) {
+      const video = byId.get(id);
+      if (video && !selected.has(video.courseId))
+        selected.set(video.courseId, video.id);
+    }
+    for (const video of state.videos) {
+      if (
+        !selected.has(video.courseId) &&
+        !state.receipts[video.id] &&
+        !(state.progress[video.id]?.position > 0)
+      )
+        selected.set(video.courseId, video.id);
+    }
+    return state.courses.flatMap((course) => {
+      const id = selected.get(course.id);
+      return id ? [id] : [];
+    });
+  }
+
+  function syncTodayTasks(state, date = new Date()) {
+    const next = {
+      date: localDay(date),
+      videoIds: automaticTodayIds(state, date),
+    };
+    if (JSON.stringify(state.dailyTasks) === JSON.stringify(next)) return false;
+    state.dailyTasks = next;
+    return true;
+  }
+  function todayVideoIds(state, home = state.home, date = new Date()) {
     if (
       (home.todayMode ?? (home.todayVideoIds.length ? "manual" : "auto")) ===
       "manual"
     )
       return [...home.todayVideoIds];
-    return state.courses.flatMap((course) => {
-      const video = state.videos.find(
-        (v) =>
-          v.courseId === course.id &&
-          !state.receipts[v.id] &&
-          !(
-            Number.isFinite(state.progress[v.id]?.position) &&
-            state.progress[v.id].position > 0
-          ),
-      );
-      return video ? [video.id] : [];
-    });
+    return automaticTodayIds(state, date);
   }
   // Read-only projection of the authoritative snapshot, never a reward write.
   function courseHistory(state, courseId) {
@@ -551,6 +640,11 @@
   }
   return {
     COVER_INDEXES,
+    COVER_ATLASES,
+    COVER_POOL_VERSION,
+    coverAsset,
+    randomCover,
+    upgradeCoverPool,
     HEROES,
     MEDALS,
     count,
@@ -570,6 +664,7 @@
     complete,
     courseStartVideo,
     todayVideoIds,
+    syncTodayTasks,
     courseHistory,
     reward,
     planMatches,

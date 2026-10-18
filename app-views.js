@@ -32,8 +32,7 @@
   }) {
     if (!["primary", "secondary", "danger"].includes(variant))
       variant = "primary";
-    // A task card is already a native button. Its visible action uses the same
-    // presentation as a span, avoiding nested interactive controls.
+    // Non-interactive previews can reuse the presentation without nesting buttons.
     const tag = href !== undefined ? "a" : as === "span" ? "span" : "button";
     const attributes = {
       ...attrs,
@@ -140,7 +139,9 @@
   const duration = (n) =>
     `${String(Math.floor((n || 0) / 60)).padStart(2, "0")}:${String(Math.floor((n || 0) % 60)).padStart(2, "0")}`;
   function cover(index) {
-    return `<div class="thumb"><span class="tile homepage-cover" data-cover-index="${index}" style="--x:${((index % 4) / 3) * 100}%;--y:${Math.floor(index / 4) * 100}%"></span></div>`;
+    const asset = core.coverAsset(index);
+    if (!asset) return '<div class="thumb"></div>';
+    return `<div class="thumb"><span class="tile homepage-cover" data-cover-index="${index}" style="background-image:url('${asset.path}');--x:${(asset.column / 3) * 100}%;--y:${asset.row * 100}%"></span></div>`;
   }
   function options(state, id, all = false) {
     return (
@@ -160,9 +161,16 @@
     return `<div class="parent-view"><div class="app"><header class="head">${BackButton("content", "返回内容中心")}<div class="head-main"><h1>${title}</h1><p>${subtitle}</p></div>${actions || '<span class="badge">' + icon("lock") + "家长模式</span>"}</header>${nav(page)}${body}</div></div>`;
   }
   function homeCard(v, state) {
-    const p = state.progress[v.id],
-      done = !!state.receipts[v.id];
-    return `<button class="task-card" data-play="${v.id}" aria-label="播放${esc(v.title)}"><span class="cover">${cover(v.coverIndex)}</span><span class="details"><span class="lesson-title">${esc(v.title)}</span><span class="lesson-meta">${esc(state.courses.find((c) => c.id === v.courseId)?.title)} · ${duration(v.source.duration || p?.duration)}</span><span class="status-line">${done ? '<span class="status done">已完成</span>' : AppButton({ as: "span", label: p?.position ? "继续学习" : "开始学习", leadingIcon: "play" })}</span></span></button>`;
+    return `<article class="task-card">${taskArtwork(v, state)}<div class="details">${taskAction(v, state)}</div></article>`;
+  }
+  function taskArtwork(v, state) {
+    const course = state.courses.find((c) => c.id === v.courseId),
+      seconds = v.source.duration || state.progress[v.id]?.duration;
+    return `<div class="cover task-artwork">${cover(v.coverIndex)}<span class="task-subject" style="--subject:${course?.color || "#187958"}" aria-label="科目：${esc(course?.title)}" title="${esc(course?.title)}">${esc(course?.tag)}</span>${seconds > 0 ? `<span class="task-duration" aria-label="视频时长 ${duration(seconds)}">${duration(seconds)}</span>` : ""}</div>`;
+  }
+  function taskAction(v, state) {
+    const label = state.receipts[v.id] ? "再次学习" : "开始学习";
+    return `<div class="status-line">${AppButton({ label, leadingIcon: "play", attrs: { "data-play": v.id, "aria-label": `${label}：${v.title}` } })}</div>`;
   }
   function home(state) {
     const todayIds = core.todayVideoIds(state),
@@ -202,7 +210,7 @@
       }
       return `<section class="home-section ${today ? "today" : "weekly"}"><div class="section-head"><h${today ? "1" : "2"}>${esc(title)}</h${today ? "1" : "2"}><p>${today ? `已完成 ${videos.filter((v) => state.receipts[v.id]).length} / ${videos.length}` : esc(subtitle)}</p></div>${content}</section>`;
     };
-    return `<div class="learning-home"><header class="home-header"><button class="profile" data-profile><span class="avatar artwork"><span class="art-tile" style="--col:0;--row:0"><img src="./assets/images/illustration-atlas.png" alt="" draggable="false"></span></span><span class="profile-copy"><span class="profile-name">${esc(state.settings.profileName)}</span><span class="greeting">每天进步一点点</span></span></button><nav class="home-nav">${AppButton({ label: "内容中心", variant: "secondary", href: "#/content" })}${AppButton({ label: "定制", leadingIcon: "lock", attrs: { "data-parent-route": "courses" } })}</nav></header><main>${section("今日任务", "", todayIds, true)}${state.home.sections.map((s) => section(s.title, s.subtitle, s.videoIds)).join("")}</main><footer class="home-footer"><p>左右滑动，发现更多学习内容</p><div class="home-meta"><span id="pwa-status">本机课程与学习记录</span><button data-install>添加到主屏幕</button><span>v5.0</span></div></footer></div>`;
+    return `<div class="learning-home"><header class="home-header"><button class="profile" data-profile><span class="avatar artwork"><span class="art-tile" style="--col:0;--row:0"><img src="./assets/images/covers/illustration-atlas.webp" alt="" draggable="false"></span></span><span class="profile-copy"><span class="profile-name">${esc(state.settings.profileName)}</span><span class="greeting">每天进步一点点</span></span></button><nav class="home-nav">${AppButton({ label: "内容中心", variant: "secondary", href: "#/content" })}${AppButton({ label: "定制", leadingIcon: "lock", attrs: { "data-parent-route": "courses" } })}</nav></header><main>${section("今日任务", "", todayIds, true)}${state.home.sections.map((s) => section(s.title, s.subtitle, s.videoIds)).join("")}</main><footer class="home-footer"><p>左右滑动，发现更多学习内容</p><div class="home-meta"><span id="pwa-status">本机课程与学习记录</span><button data-install>添加到主屏幕</button><span>v5.0</span></div></footer></div>`;
   }
   function content(state) {
     return `<div class="content-center"><header class="center-header"><div class="center-heading">${BackButton("home", "返回学习首页")}<div><h1>内容中心</h1><p>完成学习，点亮你的英雄</p></div></div><div class="center-profile"><span class="profile-text">${esc(state.settings.profileName)}</span></div></header><p class="reward-rule"><img src="./assets/content-center/star-lit.png" width="28" height="28" alt="">每完成5个不同视频，点亮一个奖励</p><main><section class="course-grid">${
@@ -252,7 +260,8 @@
   function configure(state, draft, dirty) {
     const card = (id, key, i, editable = true) => {
       const v = state.videos.find((v) => v.id === id);
-      return `<article class="home-card">${cover(v.coverIndex)}<h3>${esc(v.title)}</h3><span class="pill">${esc(state.courses.find((c) => c.id === v.courseId)?.title)}</span>${editable ? `<div class="config-tools"><button data-config-order="${esc(key)}" data-index="${i}" data-delta="-1" aria-label="前移${esc(v.title)}">←</button><button data-config-order="${esc(key)}" data-index="${i}" data-delta="1" aria-label="后移${esc(v.title)}">→</button><button data-config-remove="${esc(key)}" data-index="${i}">移除</button></div>` : ""}</article>`;
+      if (!v) return "";
+      return `<article class="home-card">${taskArtwork(v, state)}<div class="details"><h3 class="lesson-title">${esc(v.title)}</h3>${taskAction(v, state)}</div>${editable ? `<div class="config-tools"><button data-config-order="${esc(key)}" data-index="${i}" data-delta="-1" aria-label="前移${esc(v.title)}">←</button><button data-config-order="${esc(key)}" data-index="${i}" data-delta="1" aria-label="后移${esc(v.title)}">→</button><button data-config-remove="${esc(key)}" data-index="${i}">移除</button></div>` : ""}</article>`;
     };
     const rail = (ids, key, editable = true) =>
       `<div class="config-rail">${ids.map((id, i) => card(id, key, i, editable)).join("")}${editable ? `<button class="add-video" data-config-add="${esc(key)}">＋ 添加视频</button>` : ids.length ? "" : '<p class="empty">当前没有未看过的视频，导入新视频后会自动安排。</p>'}</div>`;
@@ -261,7 +270,7 @@
       "configure",
       "首页配置",
       "调整孩子首页展示的视频与栏目",
-      `<main id="home-editor"><section class="config-section"><div class="section-heading"><h2>今日任务</h2><label class="today-mode">安排方式<select id="today-mode"><option value="auto" ${automatic ? "selected" : ""}>自动安排</option><option value="manual" ${automatic ? "" : "selected"}>手动选择</option></select></label></div><p class="muted">自动安排时，按课程当前顺序，每门课程取第一个没看过的视频；看过或已完成的视频不再入选。</p>${rail(core.todayVideoIds(state, draft), "today", !automatic)}</section>${draft.sections.map((s, i) => `<section class="config-section"><div class="section-heading"><label class="editable-title">栏目标题<input data-section-title="${s.id}" value="${esc(s.title)}"></label><label class="editable-subtitle">副标题<input data-section-subtitle="${s.id}" value="${esc(s.subtitle)}"></label><button class="text-action" data-section-order="${i}" data-delta="-1">↑</button><button class="text-action" data-section-order="${i}" data-delta="1">↓</button><button class="text-action danger" data-section-delete="${s.id}">删除栏目</button></div>${rail(s.videoIds, s.id)}</section>`).join("")}</main><button class="section-add" id="add-section">＋ 添加内容栏目</button><p class="footnote" id="save-status">${dirty ? "有未保存的修改" : "配置已保存"} · 移除首页展示不会删除课程视频</p>`,
+      `<main id="home-editor"><section class="config-section"><div class="section-heading"><h2>今日任务</h2><label class="today-mode">安排方式<select id="today-mode"><option value="auto" ${automatic ? "selected" : ""}>自动安排</option><option value="manual" ${automatic ? "" : "selected"}>手动选择</option></select></label></div><p class="muted">自动安排时，每门课程选一个没看过的视频；当天保留任务，学完可再次学习，次日安排新的任务。</p>${rail(core.todayVideoIds(state, draft), "today", !automatic)}</section>${draft.sections.map((s, i) => `<section class="config-section"><div class="section-heading"><label class="editable-title">栏目标题<input data-section-title="${s.id}" value="${esc(s.title)}"></label><label class="editable-subtitle">副标题<input data-section-subtitle="${s.id}" value="${esc(s.subtitle)}"></label><button class="text-action" data-section-order="${i}" data-delta="-1">↑</button><button class="text-action" data-section-order="${i}" data-delta="1">↓</button><button class="text-action danger" data-section-delete="${s.id}">删除栏目</button></div>${rail(s.videoIds, s.id)}</section>`).join("")}</main><button class="section-add" id="add-section">＋ 添加内容栏目</button><p class="footnote" id="save-status">${dirty ? "有未保存的修改" : "配置已保存"} · 移除首页展示不会删除课程视频</p>`,
       `<div class="actions">${AppButton({ label: "保存配置", leadingIcon: "save", attrs: { id: "save-home" } })}</div>`,
     );
   }

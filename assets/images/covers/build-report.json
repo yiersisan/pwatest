@@ -1,0 +1,112 @@
+[
+  {
+    "source": "assets/images/illustration-atlas.png",
+    "output": "./assets/images/covers/illustration-atlas.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2025374,
+    "outputBytes": 178860,
+    "sourceSHA256": "ba8ce520db432edeb10dd232800632dede231088664c93eba9ae354c8fb8a151",
+    "outputSHA256": "182c70c2c1fbbc779d2a45df58fc2e6e0a20aedff681d1b3ba58a2da71f9c4e2"
+  },
+  {
+    "source": "assets/images/0.png",
+    "output": "./assets/images/covers/0.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2347799,
+    "outputBytes": 220760,
+    "sourceSHA256": "1e5045da66d0fa38948ff0441a189fa755dba09954c94c4b7a34a741b7ab1004",
+    "outputSHA256": "99b95ac336783b8ca470be512ffa379168a126a9acc7616481d8c00d1a86ba1a"
+  },
+  {
+    "source": "assets/images/1.png",
+    "output": "./assets/images/covers/1.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2423872,
+    "outputBytes": 276004,
+    "sourceSHA256": "54e33b7a484bac197913ac2fe78d4f443641241cefb874acf8b3083394caa4a5",
+    "outputSHA256": "933ee24f9629bc90b9206232ae79d0e1ebe273b3419a73d266a2814b1b78de0e"
+  },
+  {
+    "source": "assets/images/2.png",
+    "output": "./assets/images/covers/2.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2405558,
+    "outputBytes": 252586,
+    "sourceSHA256": "7ddd052019cf2847dff16d595ebdd9162b8f714ff5e12ec4b57135c1cfc8b854",
+    "outputSHA256": "3bde24a84ce6e4c8dde9379933a7c964e82df5366fa9314d9272a2e27205e6e3"
+  },
+  {
+    "source": "assets/images/3.png",
+    "output": "./assets/images/covers/3.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2741429,
+    "outputBytes": 338632,
+    "sourceSHA256": "162fb354506dd7b9ae677df1210d6eb80a468ce7490f9e04afc10e13ed36052f",
+    "outputSHA256": "45b5cd17b833252a4de43c7d13d84973080412fe044f53337d48d214f2e5a5f6"
+  },
+  {
+    "source": "assets/images/4.png",
+    "output": "./assets/images/covers/4.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2534207,
+    "outputBytes": 274114,
+    "sourceSHA256": "996c1acef97623d054e84abcd63b4babe01d22fb7811612971fa86ea566ec880",
+    "outputSHA256": "d94fe9fab408600ec964ae828704412fde0eafaafe3fb27a7aa992c5c9024e81"
+  },
+  {
+    "source": "assets/images/5.png",
+    "output": "./assets/images/covers/5.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 3838277,
+    "outputBytes": 625644,
+    "sourceSHA256": "fab99d29b10cdae40431b85b345feb303dee80da910fc8acc318ea2aa640625e",
+    "outputSHA256": "0e6fb93afc0e6906b6b54958fc7716a27d523bf2ab867815b684695605f89a78"
+  },
+  {
+    "source": "assets/images/6.png",
+    "output": "./assets/images/covers/6.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2446774,
+    "outputBytes": 263926,
+    "sourceSHA256": "a63992b9c7351bb53f9bbf61fc97f865d850a1956b5c21a2421f660f31e30d30",
+    "outputSHA256": "b2f01ca4bfc28b2bafff84872fdb947b7a068683042d117f466016882c408a32"
+  },
+  {
+    "source": "assets/images/7.png",
+    "output": "./assets/images/covers/7.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 2937413,
+    "outputBytes": 362000,
+    "sourceSHA256": "7fad728adb85f4c03c836c3cb86322609efd8959ab4a0339019c0b46ff6c7a01",
+    "outputSHA256": "a71d89e9ddb0c9615ccdc58d0ba73db94331bf813fafc3b3b6c86f0b592a08ea"
+  },
+  {
+    "source": "assets/images/8.png",
+    "output": "./assets/images/covers/8.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 3113512,
+    "outputBytes": 423038,
+    "sourceSHA256": "4e603bf45cdc55e7fce96e06f3c8f988731e180b321d7831fe8c587602a4e75a",
+    "outputSHA256": "7f823c944eb7a9e5d4da263b5574d1c15f8dc4471081a8fc6368ce7971f3bab7"
+  },
+  {
+    "source": "assets/images/9.png",
+    "output": "./assets/images/covers/9.webp",
+    "width": 1774,
+    "height": 887,
+    "sourceBytes": 3104448,
+    "outputBytes": 446586,
+    "sourceSHA256": "d8da4f8c03cf1e1ac5e5838dd8c08963993e161dfca0ff38102c9aac3b6c680d",
+    "outputSHA256": "1a5307cf7cc0ea9cb6a2ca49c883337eb3ca1d8384bd9ad931bf7e390fcde8c4"
+  }
+]

@@ -50,6 +50,10 @@
                 throw Error("数据库事务中不能异步读取文件");
               state.revision++;
             }
+            if (core.upgradeCoverPool(state)) state.revision++;
+            // Store the selection in the same transaction as imports/progress.
+            // Scheduling is derived metadata, not a separate user edit revision.
+            core.syncTodayTasks(state);
             state = core.validate(state);
             store.put(state, "snapshot");
           } catch (e) {

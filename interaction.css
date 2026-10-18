@@ -1,14 +1,14 @@
-/* 禁选与禁拖拽；保留输入编辑、滚动和用户缩放。 */
+/* 固定页面比例、禁选与禁拖拽；保留单指滚动和输入编辑。 */
 html,
 body {
-  touch-action: auto;
+  touch-action: pan-x pan-y;
 }
 button,
 a,
 input,
 select,
 textarea {
-  touch-action: auto;
+  touch-action: pan-x pan-y;
 }
 html body * {
   -webkit-user-select: none !important;

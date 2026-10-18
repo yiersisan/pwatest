@@ -272,7 +272,7 @@
   width: 150px;
 }
 .parent-view .tile.homepage-cover {
-  background-image: url("./assets/images/illustration-atlas.png");
+  background-image: url("./assets/images/covers/illustration-atlas.webp");
 }
 .parent-view .tile {
   position: absolute;

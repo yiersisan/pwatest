@@ -222,7 +222,7 @@ html.history-context #app-view {
   aspect-ratio: 1;
   top: 50%;
   transform: translateY(-50%);
-  background: url("./assets/images/illustration-atlas.png") var(--x) var(--y) /
+  background: url("./assets/images/covers/illustration-atlas.webp") var(--x) var(--y) /
     400% 200% no-repeat;
 }
 .history-duration {

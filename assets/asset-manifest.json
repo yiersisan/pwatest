@@ -58,7 +58,7 @@
       "cover-zebra"
     ]
   },
-  "note": "运行时使用包内共享 atlas，按实际 1774×887 / 4×2 参数裁切；originalIllustrations 仅记录原包 SVG 文件名，不是运行时文件路径。图标使用 icons/sprite.svg。 图标 symbol 已内联到 index.html 以保证 Safari 离线显示。",
+  "note": "原始 PNG 保留；页面实际使用 covers 下的 WebP 图集，按 1774×887 / 4×2 参数裁切。图标使用 assets/parent/icons/sprite.svg。originalIllustrations 仅记录原包 SVG 文件名。",
   "originalIllustrations": {
     "avatar-ultraman": "images/avatar-ultraman.svg",
     "avatar-teacher": "images/avatar-teacher.svg",
@@ -68,5 +68,26 @@
     "cover-giraffe": "images/cover-giraffe.svg",
     "cover-cake": "images/cover-cake.svg",
     "cover-zebra": "images/cover-zebra.svg"
+  },
+  "coverPool": {
+    "version": 1,
+    "total": 88,
+    "columns": 4,
+    "rows": 2,
+    "runtimeAtlases": [
+      "images/covers/illustration-atlas.webp",
+      "images/covers/0.webp",
+      "images/covers/1.webp",
+      "images/covers/2.webp",
+      "images/covers/3.webp",
+      "images/covers/4.webp",
+      "images/covers/5.webp",
+      "images/covers/6.webp",
+      "images/covers/7.webp",
+      "images/covers/8.webp",
+      "images/covers/9.webp"
+    ],
+    "indexRule": "图集顺序 × 8 + 行 × 4 + 列",
+    "buildReport": "images/covers/build-report.json"
   }
 }
